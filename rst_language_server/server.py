@@ -27,7 +27,9 @@ async def did_open(ls: LanguageServer, params: DidOpenTextDocumentParams):
 async def completion(params: CompletionParams):
     return CompletionList(
         is_incomplete=False,
-        items=[CompletionItem(label=f"#{fn['ids'][0]}]_") for fn in index["footnotes"]],
+        items=[
+            CompletionItem(label=f"#{fn['names'][0]}]_") for fn in index["footnotes"]
+        ],
     )
 
 
