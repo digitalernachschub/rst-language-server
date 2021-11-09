@@ -6,6 +6,7 @@ authors = ["Michael Seifert <m.seifert@digitalernachschub.de>"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
+pygls = "^0.11.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
