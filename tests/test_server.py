@@ -4,6 +4,7 @@ from textwrap import dedent
 from threading import Thread
 from time import sleep
 
+import pytest
 from pygls.lsp.methods import COMPLETION, EXIT, INITIALIZE, TEXT_DOCUMENT_DID_OPEN
 from pygls.lsp.types import (
     ClientCapabilities,
@@ -19,7 +20,8 @@ from pygls.server import LanguageServer
 from rst_language_server.server import rst_language_server
 
 
-def test_autocompletes_numbered_footnotes():
+@pytest.fixture
+def client_server():
     # Establish pipes for communication between server and client
     server_to_client_read, server_to_client_write = os.pipe()
     client_to_server_read, client_to_server_write = os.pipe()
@@ -55,6 +57,15 @@ def test_autocompletes_numbered_footnotes():
         ),
     ).result(timeout=5.0)
 
+    yield client, server
+
+    client.lsp.notify(EXIT)
+    server.server_thread.join(timeout=2.0)
+    client.server_thread.join(timeout=2.0)
+
+
+def test_autocompletes_numbered_footnotes(client_server):
+    client, server = client_server
     client.lsp.send_request(
         TEXT_DOCUMENT_DID_OPEN,
         DidOpenTextDocumentParams(
@@ -85,7 +96,3 @@ def test_autocompletes_numbered_footnotes():
     assert any(
         (suggestion.get("label") == "#footnote1]_" for suggestion in response["items"])
     )
-
-    client.lsp.notify(EXIT)
-    server.server_thread.join(timeout=2.0)
-    client.server_thread.join(timeout=2.0)
