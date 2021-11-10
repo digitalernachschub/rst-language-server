@@ -24,7 +24,7 @@ from pygls.protocol import (
 )
 from pygls.server import LanguageServer, StdOutTransportAdapter, deserialize_message
 
-from rst_language_server.server import rst_language_server
+from rst_language_server.server import create_server
 
 # docutils matches auto-numbered footnote labels against the following regex
 # see https://sourceforge.net/p/docutils/code/HEAD/tree/tags/docutils-0.18/docutils/parsers/rst/states.py#l2322
@@ -53,7 +53,7 @@ def _server() -> Tuple[LanguageServer, BinaryIO]:
         stdout_write_fd, "wb"
     )
 
-    server = rst_language_server
+    server = create_server()
     transport = StdOutTransportAdapter(stdin_read, stdout_write)
     server.lsp.connection_made(transport)
 

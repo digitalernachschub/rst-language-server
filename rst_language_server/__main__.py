@@ -1,8 +1,9 @@
-from rst_language_server.server import rst_language_server
+from rst_language_server.server import create_server
 
 
 def main():
-    rst_language_server.start_io()
+    server = create_server()
+    server.start_io()
 
 
 if __name__ == "__main__":
