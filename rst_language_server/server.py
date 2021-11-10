@@ -22,7 +22,6 @@ from pygls.server import LanguageServer
 def create_server() -> LanguageServer:
     rst_language_server = LanguageServer()
     index = {
-        "documents": {},
         "footnotes": [],
     }
 
@@ -38,14 +37,11 @@ def create_server() -> LanguageServer:
         file_content = params.text_document.text
         rst = parse_rst(file_content)
         rst.walk(FootnoteVisitor(rst))
-        index["documents"][params.text_document.uri] = file_content
 
     @rst_language_server.feature(TEXT_DOCUMENT_DID_CHANGE)
     def did_change(ls: LanguageServer, params: DidChangeTextDocumentParams):
         doc_id = params.text_document.uri
         new_doc = ls.workspace.get_document(doc_id)
-        # Rebuild document index
-        index["documents"][doc_id] = new_doc.source
         # Rebuild footnotes index
         index["footnotes"].clear()
         rst = parse_rst(new_doc.source)
@@ -83,7 +79,9 @@ def create_server() -> LanguageServer:
         previous_line_index = params.position.line - 1
         if params.position.character != 0 or previous_line_index < 0:
             return ()
-        document_content: str = index["documents"].get(params.text_document.uri)
+        document_uri = params.text_document.uri
+        doc = rst_language_server.workspace.get_document(document_uri)
+        document_content: str = doc.source
         if not document_content:
             return ()
         lines = document_content.splitlines()
