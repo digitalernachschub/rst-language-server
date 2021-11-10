@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import string
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
@@ -48,6 +49,9 @@ simplename = st.text(
 footnote_label = st.integers(min_value=0).map(str) | simplename.map(
     lambda label: f"#{label}"
 )
+
+# https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#footnote-reference-6
+section_adornment_char = st.sampled_from(string.punctuation)
 
 
 @contextmanager
@@ -150,7 +154,10 @@ def test_autocompletes_footnote_labels(tmp_path_factory, footnote_label: str):
     assert suggestion.get("detail") == "https://www.example.com"
 
 
-def test_autocompletes_section_markup(tmp_path_factory):
+@given(adornment_char=section_adornment_char)
+def test_autocompletes_title_adornment_when_char_is_present_at_line_start(
+    tmp_path_factory, adornment_char: str
+):
     section_name = "MyHeading"
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
@@ -164,7 +171,7 @@ def test_autocompletes_section_markup(tmp_path_factory):
                 text_document=TextDocumentItem(
                     **{
                         "languageId": "rst",
-                        "text": section_name,
+                        "text": f"{section_name}\n{adornment_char}",
                         "uri": file_path.as_uri(),
                         "version": 0,
                     }
@@ -178,14 +185,14 @@ def test_autocompletes_section_markup(tmp_path_factory):
             COMPLETION,
             CompletionParams(
                 text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
-                position=Position(line=1, character=0),
+                position=Position(line=1, character=1),
             ),
         ).result
 
     assert len(response["items"]) > 0
     suggestion = response["items"][0]
-    assert suggestion.get("label") == "==="
-    assert suggestion.get("insertText") == len(section_name) * "="
+    assert suggestion.get("label") == 3 * adornment_char
+    assert suggestion.get("insertText") == len(section_name) * adornment_char
 
 
 def test_updates_completion_suggestions_upon_document_change(tmp_path_factory):
