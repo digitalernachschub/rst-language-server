@@ -1,4 +1,4 @@
-from rst_language_server.server import create_server
+from rst_language_server import create_server
 
 
 def main():
