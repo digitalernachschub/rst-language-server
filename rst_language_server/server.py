@@ -33,7 +33,10 @@ def completion(params: CompletionParams):
         footnote_labels.append(label)
     return CompletionList(
         is_incomplete=False,
-        items=[CompletionItem(label=f"{label}]_") for label in footnote_labels],
+        items=[
+            CompletionItem(label=label, insert_text=f"{label}]_")
+            for label in footnote_labels
+        ],
     )
 
 
