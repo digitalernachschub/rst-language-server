@@ -50,6 +50,9 @@ footnote_label = st.integers(min_value=0).map(str) | simplename.map(
     lambda label: f"#{label}"
 )
 
+# Generously excluding all control characters from the title characters, even though
+# there seems to be nothing in the docutils rst spec.
+section_title = st.text(st.characters(blacklist_categories=["Cc", "Cs"]), min_size=1)
 # https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#footnote-reference-6
 section_adornment_char = st.sampled_from(string.punctuation)
 
@@ -154,11 +157,10 @@ def test_autocompletes_footnote_labels(tmp_path_factory, footnote_label: str):
     assert suggestion.get("detail") == "https://www.example.com"
 
 
-@given(adornment_char=section_adornment_char)
+@given(section_title=section_title, adornment_char=section_adornment_char)
 def test_autocompletes_title_adornment_when_char_is_present_at_line_start(
-    tmp_path_factory, adornment_char: str
+    tmp_path_factory, section_title: str, adornment_char: str
 ):
-    section_name = "MyHeading"
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
     with _server(root_uri=file_path.as_uri()) as setup:
@@ -171,7 +173,7 @@ def test_autocompletes_title_adornment_when_char_is_present_at_line_start(
                 text_document=TextDocumentItem(
                     **{
                         "languageId": "rst",
-                        "text": f"{section_name}\n{adornment_char}",
+                        "text": f"{section_title}\n{adornment_char}",
                         "uri": file_path.as_uri(),
                         "version": 0,
                     }
@@ -192,7 +194,7 @@ def test_autocompletes_title_adornment_when_char_is_present_at_line_start(
     assert len(response["items"]) > 0
     suggestion = response["items"][0]
     assert suggestion.get("label") == 3 * adornment_char
-    assert suggestion.get("insertText") == len(section_name) * adornment_char
+    assert suggestion.get("insertText") == len(section_title) * adornment_char
 
 
 def test_updates_completion_suggestions_upon_document_change(tmp_path_factory):
