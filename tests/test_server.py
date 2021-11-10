@@ -136,7 +136,7 @@ def test_autocompletes_footnote_labels(tmp_path_factory, footnote_label: str):
             COMPLETION,
             CompletionParams(
                 text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
-                position=Position(line=42, character=42),
+                position=Position(line=3, character=0),
             ),
         ).result
 
@@ -231,7 +231,7 @@ def test_updates_completion_suggestions_upon_document_change(tmp_path_factory):
             COMPLETION,
             CompletionParams(
                 text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
-                position=Position(line=42, character=42),
+                position=Position(line=1, character=0),
             ),
         ).result
 
