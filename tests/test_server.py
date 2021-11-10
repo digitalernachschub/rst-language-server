@@ -49,6 +49,16 @@ simplename = st.text(
 footnote_label = st.integers(min_value=0).map(str) | simplename.map(
     lambda label: f"#{label}"
 )
+footnote_content = (
+    st.text(
+        st.characters(blacklist_categories=["Cc", "Cs"], blacklist_characters="|"),
+        min_size=1,
+    )
+    .map(lambda text: text.replace("\\", ""))
+    .map(lambda text: text.replace("_", ""))
+    .map(lambda text: text.strip())
+    .filter(lambda text: text)
+)
 
 # Generously excluding all control characters from the title characters, even though
 # there seems to be nothing in the docutils rst spec.
@@ -115,8 +125,10 @@ def _send_lsp_request(
     return response
 
 
-@given(footnote_label=footnote_label)
-def test_autocompletes_footnote_labels(tmp_path_factory, footnote_label: str):
+@given(footnote_label=footnote_label, footnote_content=footnote_content)
+def test_autocompletes_footnote_labels(
+    tmp_path_factory, footnote_label: str, footnote_content: str
+):
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
     with _server(root_uri=file_path.as_uri()) as setup:
@@ -129,7 +141,7 @@ def test_autocompletes_footnote_labels(tmp_path_factory, footnote_label: str):
                 text_document=TextDocumentItem(
                     **{
                         "languageId": "rst",
-                        "text": f"See [{footnote_label}]_\n\n.. [{footnote_label}] https://www.example.com\n",
+                        "text": f"See [{footnote_label}]_\n\n.. [{footnote_label}] {footnote_content}\n",
                         "uri": file_path.as_uri(),
                         "version": 0,
                     }
@@ -154,7 +166,7 @@ def test_autocompletes_footnote_labels(tmp_path_factory, footnote_label: str):
         f"Available suggestions {', '.join((repr(d) for d in response['items']))}"
     )
     assert suggestion.get("insertText") == f"{footnote_label.lower()}]_"
-    assert suggestion.get("detail") == "https://www.example.com"
+    assert suggestion.get("detail") == footnote_content
 
 
 @given(data=st.data())
