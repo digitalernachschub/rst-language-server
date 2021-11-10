@@ -2,10 +2,10 @@ import json
 import os
 import re
 import uuid
-from typing import Any, BinaryIO
+from contextlib import contextmanager
+from typing import Any, BinaryIO, Tuple
 
 import hypothesis.strategies as st
-import pytest
 from hypothesis import given
 from pygls.lsp.methods import COMPLETION, INITIALIZE, TEXT_DOCUMENT_DID_OPEN
 from pygls.lsp.types import (
@@ -41,8 +41,8 @@ footnote_label = st.integers(min_value=0).map(str) | simplename.map(
 )
 
 
-@pytest.fixture(scope="module")
-def client_server():
+@contextmanager
+def _server() -> Tuple[LanguageServer, BinaryIO, BinaryIO]:
     # Establish pipes for communication between server and tests
     stdout_read_fd, stdout_write_fd = os.pipe()
     stdin_read_fd, stdin_write_fd = os.pipe()
@@ -65,7 +65,7 @@ def client_server():
             process_id=42, root_uri="file:///tmp", capabilities=ClientCapabilities()
         ),
     )
-    return server, stdin_write, stdout_read
+    yield server, stdin_write, stdout_read
 
 
 def _send_lsp_request(
@@ -96,35 +96,36 @@ def _send_lsp_request(
 
 
 @given(footnote_label=footnote_label)
-def test_autocompletes_footnote_labels(client_server, footnote_label: str):
-    server, stdin, stdout = client_server
-    _send_lsp_request(
-        server,
-        stdout,
-        TEXT_DOCUMENT_DID_OPEN,
-        DidOpenTextDocumentParams(
-            text_document=TextDocumentItem(
-                **{
-                    "languageId": "rst",
-                    "text": f"See [{footnote_label}]_\n\n.. [{footnote_label}] https://www.example.com\n",
-                    "uri": "file:///tmp/reStructuredText.rst",
-                    "version": 0,
-                }
-            )
-        ),
-    )
-
-    response = _send_lsp_request(
-        server,
-        stdout,
-        COMPLETION,
-        CompletionParams(
-            text_document=TextDocumentIdentifier(
-                uri="file:///tmp/reStructuredText.rst"
+def test_autocompletes_footnote_labels(footnote_label: str):
+    with _server() as setup:
+        server, stdin, stdout = setup
+        _send_lsp_request(
+            server,
+            stdout,
+            TEXT_DOCUMENT_DID_OPEN,
+            DidOpenTextDocumentParams(
+                text_document=TextDocumentItem(
+                    **{
+                        "languageId": "rst",
+                        "text": f"See [{footnote_label}]_\n\n.. [{footnote_label}] https://www.example.com\n",
+                        "uri": "file:///tmp/reStructuredText.rst",
+                        "version": 0,
+                    }
+                )
             ),
-            position=Position(line=42, character=42),
-        ),
-    ).result
+        )
+
+        response = _send_lsp_request(
+            server,
+            stdout,
+            COMPLETION,
+            CompletionParams(
+                text_document=TextDocumentIdentifier(
+                    uri="file:///tmp/reStructuredText.rst"
+                ),
+                position=Position(line=42, character=42),
+            ),
+        ).result
 
     assert len(response["items"]) > 0
     assert any(
