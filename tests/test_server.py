@@ -3,6 +3,7 @@ import os
 import re
 import uuid
 from datetime import timedelta
+from typing import Any, BinaryIO
 
 import hypothesis.strategies as st
 import pytest
@@ -20,8 +21,9 @@ from pygls.protocol import (
     DidOpenTextDocumentParams,
     JsonRPCProtocol,
     JsonRPCRequestMessage,
+    JsonRPCResponseMessage,
 )
-from pygls.server import StdOutTransportAdapter, deserialize_message
+from pygls.server import LanguageServer, StdOutTransportAdapter, deserialize_message
 
 from rst_language_server.server import rst_language_server
 
@@ -54,13 +56,25 @@ def client_server():
     transport = StdOutTransportAdapter(stdin_read, stdout_write)
     server.lsp.connection_made(transport)
 
+    _send_lsp_request(
+        server,
+        stdout_read,
+        INITIALIZE,
+        InitializeParams(
+            process_id=42, root_uri="file:///tmp", capabilities=ClientCapabilities()
+        ),
+    )
+    return server, stdin_write, stdout_read
+
+
+def _send_lsp_request(
+    server: LanguageServer, stdout: BinaryIO, method: str, params: Any
+) -> JsonRPCResponseMessage:
     request = JsonRPCRequestMessage(
         id=str(uuid.uuid4()),
         jsonrpc=JsonRPCProtocol.VERSION,
-        method=INITIALIZE,
-        params=InitializeParams(
-            process_id=42, root_uri="file:///tmp", capabilities=ClientCapabilities()
-        ),
+        method=method,
+        params=params,
     )
     body = request.json(by_alias=True, exclude_unset=True).encode(
         JsonRPCProtocol.CHARSET
@@ -70,23 +84,25 @@ def client_server():
         f"Content-Type: {JsonRPCProtocol.CONTENT_TYPE}; charset={JsonRPCProtocol.CHARSET}\r\n\r\n"
     ).encode(JsonRPCProtocol.CHARSET)
     server.lsp.data_received(header + body)
-    content_length_header = stdout_read.readline()
+    content_length_header = stdout.readline()
     content_length = int(content_length_header.split()[-1])
-    while stdout_read.readline().strip():
+    while stdout.readline().strip():
+        # Read all header lines until encountering an empty line
         pass
-    stdout_read.read(content_length)
-    return server, stdin_write, stdout_read
+    response_data = stdout.read(content_length)
+    response = deserialize_message(json.loads(response_data))
+    return response
 
 
 @settings(deadline=timedelta(seconds=0.7))
 @given(footnote_label=footnote_label)
 def test_autocompletes_numbered_footnotes(client_server, footnote_label: str):
     server, stdin, stdout = client_server
-    request = JsonRPCRequestMessage(
-        id=str(uuid.uuid4()),
-        jsonrpc=JsonRPCProtocol.VERSION,
-        method=TEXT_DOCUMENT_DID_OPEN,
-        params=DidOpenTextDocumentParams(
+    _send_lsp_request(
+        server,
+        stdout,
+        TEXT_DOCUMENT_DID_OPEN,
+        DidOpenTextDocumentParams(
             text_document=TextDocumentItem(
                 **{
                     "languageId": "rst",
@@ -97,45 +113,18 @@ def test_autocompletes_numbered_footnotes(client_server, footnote_label: str):
             )
         ),
     )
-    body = request.json(by_alias=True, exclude_unset=True).encode(
-        JsonRPCProtocol.CHARSET
-    )
-    header = (
-        f"Content-Length: {len(body)}\r\n"
-        f"Content-Type: {JsonRPCProtocol.CONTENT_TYPE}; charset={JsonRPCProtocol.CHARSET}\r\n\r\n"
-    ).encode(JsonRPCProtocol.CHARSET)
-    server.lsp.data_received(header + body)
-    content_length_header = stdout.readline()
-    content_length = int(content_length_header.split()[-1])
-    while stdout.readline().strip():
-        pass
-    stdout.read(content_length)
 
-    request = JsonRPCRequestMessage(
-        id=str(uuid.uuid4()),
-        jsonrpc=JsonRPCProtocol.VERSION,
-        method=COMPLETION,
-        params=CompletionParams(
+    response = _send_lsp_request(
+        server,
+        stdout,
+        COMPLETION,
+        CompletionParams(
             text_document=TextDocumentIdentifier(
                 uri="file:///tmp/reStructuredText.rst"
             ),
             position=Position(line=42, character=42),
         ),
-    )
-    body = request.json(by_alias=True, exclude_unset=True).encode(
-        JsonRPCProtocol.CHARSET
-    )
-    header = (
-        f"Content-Length: {len(body)}\r\n"
-        f"Content-Type: {JsonRPCProtocol.CONTENT_TYPE}; charset={JsonRPCProtocol.CHARSET}\r\n\r\n"
-    ).encode(JsonRPCProtocol.CHARSET)
-    server.lsp.data_received(header + body)
-    content_length_header = stdout.readline()
-    content_length = int(content_length_header.split()[-1])
-    while stdout.readline().strip():
-        pass
-    response_data = stdout.read(content_length)
-    response = deserialize_message(json.loads(response_data)).result
+    ).result
 
     assert len(response["items"]) > 0
     suggested_labels = [suggestion.get("label") for suggestion in response["items"]]
