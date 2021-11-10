@@ -139,3 +139,41 @@ def test_autocompletes_footnote_labels(footnote_label: str):
     )
     assert suggestion.get("insertText") == f"{footnote_label.lower()}]_"
     assert suggestion.get("detail") == "https://www.example.com"
+
+
+def test_autocompletes_section_markup():
+    section_name = "MyHeading"
+    with _server() as setup:
+        server, stdout = setup
+        _send_lsp_request(
+            server,
+            stdout,
+            TEXT_DOCUMENT_DID_OPEN,
+            DidOpenTextDocumentParams(
+                text_document=TextDocumentItem(
+                    **{
+                        "languageId": "rst",
+                        "text": section_name,
+                        "uri": "file:///tmp/reStructuredText.rst",
+                        "version": 0,
+                    }
+                )
+            ),
+        )
+
+        response = _send_lsp_request(
+            server,
+            stdout,
+            COMPLETION,
+            CompletionParams(
+                text_document=TextDocumentIdentifier(
+                    uri="file:///tmp/reStructuredText.rst"
+                ),
+                position=Position(line=1, character=0),
+            ),
+        ).result
+
+    assert len(response["items"]) > 0
+    suggestion = response["items"][0]
+    assert suggestion.get("label") == "==="
+    assert suggestion.get("insertText") == len(section_name) * "="
