@@ -7,16 +7,24 @@ from typing import Any, BinaryIO, Tuple
 
 import hypothesis.strategies as st
 from hypothesis import given
-from pygls.lsp.methods import COMPLETION, INITIALIZE, TEXT_DOCUMENT_DID_OPEN
+from pygls.lsp.methods import (
+    COMPLETION,
+    INITIALIZE,
+    TEXT_DOCUMENT_DID_CHANGE,
+    TEXT_DOCUMENT_DID_OPEN,
+)
 from pygls.lsp.types import (
     ClientCapabilities,
     CompletionParams,
     InitializeParams,
     Position,
+    TextDocumentContentChangeTextEvent,
     TextDocumentIdentifier,
     TextDocumentItem,
+    VersionedTextDocumentIdentifier,
 )
 from pygls.protocol import (
+    DidChangeTextDocumentParams,
     DidOpenTextDocumentParams,
     JsonRPCProtocol,
     JsonRPCRequestMessage,
@@ -177,3 +185,52 @@ def test_autocompletes_section_markup():
     suggestion = response["items"][0]
     assert suggestion.get("label") == "==="
     assert suggestion.get("insertText") == len(section_name) * "="
+
+
+def test_updates_completion_suggestions_upon_document_change(tmp_path):
+    file_path = tmp_path / f"{str(uuid.uuid4())}.rst"
+    with _server() as setup:
+        server, stdout = setup
+        _send_lsp_request(
+            server,
+            stdout,
+            TEXT_DOCUMENT_DID_OPEN,
+            DidOpenTextDocumentParams(
+                text_document=TextDocumentItem(
+                    **{
+                        "languageId": "rst",
+                        "text": "",
+                        "uri": file_path.as_uri(),
+                        "version": 0,
+                    }
+                )
+            ),
+        )
+        _send_lsp_request(
+            server,
+            stdout,
+            TEXT_DOCUMENT_DID_CHANGE,
+            DidChangeTextDocumentParams(
+                text_document=VersionedTextDocumentIdentifier(
+                    uri=file_path.as_uri(),
+                    version=1,
+                ),
+                content_changes=[
+                    TextDocumentContentChangeTextEvent(
+                        text=".. [#MyNote] https://www.example.com\n"
+                    )
+                ],
+            ),
+        )
+
+        response = _send_lsp_request(
+            server,
+            stdout,
+            COMPLETION,
+            CompletionParams(
+                text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
+                position=Position(line=42, character=42),
+            ),
+        ).result
+
+    assert len(response["items"]) > 0

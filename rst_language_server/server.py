@@ -4,11 +4,16 @@ from docutils.frontend import OptionParser
 from docutils.nodes import Node, SparseNodeVisitor, document, footnote
 from docutils.parsers.rst import Parser
 from docutils.utils import new_document
-from pygls.lsp.methods import COMPLETION, TEXT_DOCUMENT_DID_OPEN
+from pygls.lsp.methods import (
+    COMPLETION,
+    TEXT_DOCUMENT_DID_CHANGE,
+    TEXT_DOCUMENT_DID_OPEN,
+)
 from pygls.lsp.types import (
     CompletionItem,
     CompletionList,
     CompletionParams,
+    DidChangeTextDocumentParams,
     DidOpenTextDocumentParams,
 )
 from pygls.server import LanguageServer
@@ -34,6 +39,17 @@ def create_server() -> LanguageServer:
         rst = parse_rst(file_content)
         rst.walk(FootnoteVisitor(rst))
         index["documents"][params.text_document.uri] = file_content
+
+    @rst_language_server.feature(TEXT_DOCUMENT_DID_CHANGE)
+    def did_change(ls: LanguageServer, params: DidChangeTextDocumentParams):
+        doc_id = params.text_document.uri
+        new_doc = ls.workspace.get_document(doc_id)
+        # Rebuild document index
+        index["documents"][doc_id] = new_doc.source
+        # Rebuild footnotes index
+        index["footnotes"].clear()
+        rst = parse_rst(new_doc.source)
+        rst.walk(FootnoteVisitor(rst))
 
     @rst_language_server.feature(COMPLETION)
     def completion(params: CompletionParams):
