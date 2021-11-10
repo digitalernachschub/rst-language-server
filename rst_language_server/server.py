@@ -78,7 +78,8 @@ def create_server() -> LanguageServer:
     def _complete_headings(params: CompletionParams) -> Iterable[CompletionItem]:
         current_line_index = params.position.line
         previous_line_index = current_line_index - 1
-        if params.position.character == 0 or previous_line_index < 0:
+        current_line_length = params.position.character
+        if current_line_length == 0 or previous_line_index < 0:
             return ()
         document_uri = params.text_document.uri
         doc = rst_language_server.workspace.get_document(document_uri)
@@ -93,7 +94,8 @@ def create_server() -> LanguageServer:
         return (
             CompletionItem(
                 label=3 * adornment_char,
-                insert_text=previous_line_length * adornment_char,
+                insert_text=(previous_line_length - current_line_length)
+                * adornment_char,
             ),
         )
 

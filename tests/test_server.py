@@ -157,10 +157,16 @@ def test_autocompletes_footnote_labels(tmp_path_factory, footnote_label: str):
     assert suggestion.get("detail") == "https://www.example.com"
 
 
-@given(section_title=section_title, adornment_char=section_adornment_char)
-def test_autocompletes_title_adornment_when_char_is_present_at_line_start(
-    tmp_path_factory, section_title: str, adornment_char: str
+@given(data=st.data())
+def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
+    tmp_path_factory, data
 ):
+    _section_title: str = data.draw(section_title)
+    adornment_char: str = data.draw(section_adornment_char)
+    existing_adornment_chars: int = data.draw(
+        st.integers(min_value=1, max_value=len(_section_title))
+    )
+    adornment = existing_adornment_chars * adornment_char
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
     with _server(root_uri=file_path.as_uri()) as setup:
@@ -173,7 +179,7 @@ def test_autocompletes_title_adornment_when_char_is_present_at_line_start(
                 text_document=TextDocumentItem(
                     **{
                         "languageId": "rst",
-                        "text": f"{section_title}\n{adornment_char}",
+                        "text": f"{_section_title}\n{adornment}",
                         "uri": file_path.as_uri(),
                         "version": 0,
                     }
@@ -187,14 +193,17 @@ def test_autocompletes_title_adornment_when_char_is_present_at_line_start(
             COMPLETION,
             CompletionParams(
                 text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
-                position=Position(line=1, character=1),
+                position=Position(line=1, character=existing_adornment_chars),
             ),
         ).result
 
     assert len(response["items"]) > 0
     suggestion = response["items"][0]
     assert suggestion.get("label") == 3 * adornment_char
-    assert suggestion.get("insertText") == len(section_title) * adornment_char
+    assert (
+        suggestion.get("insertText")
+        == (len(_section_title) - existing_adornment_chars) * adornment_char
+    )
 
 
 def test_updates_completion_suggestions_upon_document_change(tmp_path_factory):
