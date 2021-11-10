@@ -105,7 +105,10 @@ def create_server() -> LanguageServer:
 def parse_rst(text: str) -> document:
     rst_parser = Parser()
     components = (Parser,)
-    settings = OptionParser(components=components).get_default_values()
+    default_settings = dict(report_level=3)  # Report errors and worse
+    settings = OptionParser(
+        components=components, defaults=default_settings
+    ).get_default_values()
     document = new_document("rst document", settings=settings)
     rst_parser.parse(text, document)
     return document
