@@ -66,6 +66,10 @@ def _server() -> Tuple[LanguageServer, BinaryIO, BinaryIO]:
         ),
     )
     yield server, stdin_write, stdout_read
+    stdin_read.close()
+    stdin_write.close()
+    stdout_read.close()
+    stdout_write.close()
 
 
 def _send_lsp_request(
