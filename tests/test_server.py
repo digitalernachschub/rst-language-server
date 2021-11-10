@@ -36,7 +36,9 @@ simplename = st.text(
     st.characters(whitelist_categories=["Lu", "Ll", "Lt", "Lm", "Lo", "Nd", "Pc"]),
     min_size=1,
 ).filter(lambda s: simplename_pattern.fullmatch(s))
-footnote_label = simplename.map(lambda label: f"#{label}")
+footnote_label = st.integers(min_value=0).map(str) | simplename.map(
+    lambda label: f"#{label}"
+)
 
 
 @pytest.fixture(scope="module")
@@ -94,7 +96,7 @@ def _send_lsp_request(
 
 
 @given(footnote_label=footnote_label)
-def test_autocompletes_numbered_footnotes(client_server, footnote_label: str):
+def test_autocompletes_footnote_labels(client_server, footnote_label: str):
     server, stdin, stdout = client_server
     _send_lsp_request(
         server,

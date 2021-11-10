@@ -25,11 +25,15 @@ def did_open(ls: LanguageServer, params: DidOpenTextDocumentParams):
 
 @rst_language_server.feature(COMPLETION, CompletionOptions(trigger_characters=["["]))
 def completion(params: CompletionParams):
+    footnote_labels = []
+    for fn in index["footnotes"]:
+        label = fn["names"][0]
+        if "auto" in fn:
+            label = "#" + label
+        footnote_labels.append(label)
     return CompletionList(
         is_incomplete=False,
-        items=[
-            CompletionItem(label=f"#{fn['names'][0]}]_") for fn in index["footnotes"]
-        ],
+        items=[CompletionItem(label=f"{label}]_") for label in footnote_labels],
     )
 
 
