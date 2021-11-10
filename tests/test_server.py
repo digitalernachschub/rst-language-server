@@ -2,12 +2,11 @@ import json
 import os
 import re
 import uuid
-from datetime import timedelta
 from typing import Any, BinaryIO
 
 import hypothesis.strategies as st
 import pytest
-from hypothesis import given, settings
+from hypothesis import given
 from pygls.lsp.methods import COMPLETION, INITIALIZE, TEXT_DOCUMENT_DID_OPEN
 from pygls.lsp.types import (
     ClientCapabilities,
@@ -94,7 +93,6 @@ def _send_lsp_request(
     return response
 
 
-@settings(deadline=timedelta(seconds=0.7))
 @given(footnote_label=footnote_label)
 def test_autocompletes_numbered_footnotes(client_server, footnote_label: str):
     server, stdin, stdout = client_server
