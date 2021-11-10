@@ -34,18 +34,16 @@ def create_server() -> LanguageServer:
         COMPLETION, CompletionOptions(trigger_characters=["["])
     )
     def completion(params: CompletionParams):
-        footnote_labels = []
+        completions = []
         for fn in index["footnotes"]:
             label = fn["names"][0]
             if "auto" in fn:
                 label = "#" + label
-            footnote_labels.append(label)
+            completion = CompletionItem(label=label, insert_text=f"{label}]_")
+            completions.append(completion)
         return CompletionList(
             is_incomplete=False,
-            items=[
-                CompletionItem(label=label, insert_text=f"{label}]_")
-                for label in footnote_labels
-            ],
+            items=completions,
         )
 
     return rst_language_server
