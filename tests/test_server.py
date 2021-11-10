@@ -138,3 +138,4 @@ def test_autocompletes_footnote_labels(footnote_label: str):
         f"Available suggestions {', '.join((repr(d) for d in response['items']))}"
     )
     assert suggestion.get("insertText") == f"{footnote_label.lower()}]_"
+    assert suggestion.get("detail") == "https://www.example.com"

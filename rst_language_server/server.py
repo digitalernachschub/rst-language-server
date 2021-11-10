@@ -39,7 +39,13 @@ def create_server() -> LanguageServer:
             label = fn["names"][0]
             if "auto" in fn:
                 label = "#" + label
-            completion = CompletionItem(label=label, insert_text=f"{label}]_")
+            paragraphs = [
+                child for child in fn.children if child.tagname == "paragraph"
+            ]
+            completion_detail = paragraphs[0].astext() if paragraphs else None
+            completion = CompletionItem(
+                label=label, insert_text=f"{label}]_", detail=completion_detail
+            )
             completions.append(completion)
         return CompletionList(
             is_incomplete=False,
