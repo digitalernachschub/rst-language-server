@@ -42,7 +42,7 @@ footnote_label = st.integers(min_value=0).map(str) | simplename.map(
 
 
 @contextmanager
-def _server() -> Tuple[LanguageServer, BinaryIO, BinaryIO]:
+def _server() -> Tuple[LanguageServer, BinaryIO]:
     # Establish pipes for communication between server and tests
     stdout_read_fd, stdout_write_fd = os.pipe()
     stdin_read_fd, stdin_write_fd = os.pipe()
@@ -65,7 +65,7 @@ def _server() -> Tuple[LanguageServer, BinaryIO, BinaryIO]:
             process_id=42, root_uri="file:///tmp", capabilities=ClientCapabilities()
         ),
     )
-    yield server, stdin_write, stdout_read
+    yield server, stdout_read
     stdin_read.close()
     stdin_write.close()
     stdout_read.close()
@@ -102,7 +102,7 @@ def _send_lsp_request(
 @given(footnote_label=footnote_label)
 def test_autocompletes_footnote_labels(footnote_label: str):
     with _server() as setup:
-        server, stdin, stdout = setup
+        server, stdout = setup
         _send_lsp_request(
             server,
             stdout,
