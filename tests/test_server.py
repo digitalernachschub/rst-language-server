@@ -3,7 +3,8 @@ import os
 import re
 import uuid
 from contextlib import contextmanager
-from typing import Any, BinaryIO, Tuple
+from pathlib import Path
+from typing import Any, BinaryIO, Callable, Tuple
 
 import hypothesis.strategies as st
 from hypothesis import given
@@ -50,7 +51,7 @@ footnote_label = st.integers(min_value=0).map(str) | simplename.map(
 
 
 @contextmanager
-def _server() -> Tuple[LanguageServer, BinaryIO]:
+def _server(root_uri: str) -> Tuple[LanguageServer, BinaryIO]:
     # Establish pipes for communication between server and tests
     stdout_read_fd, stdout_write_fd = os.pipe()
     stdin_read_fd, stdin_write_fd = os.pipe()
@@ -70,7 +71,7 @@ def _server() -> Tuple[LanguageServer, BinaryIO]:
         stdout_read,
         INITIALIZE,
         InitializeParams(
-            process_id=42, root_uri="file:///tmp", capabilities=ClientCapabilities()
+            process_id=42, root_uri=root_uri, capabilities=ClientCapabilities()
         ),
     )
     yield server, stdout_read
@@ -108,8 +109,10 @@ def _send_lsp_request(
 
 
 @given(footnote_label=footnote_label)
-def test_autocompletes_footnote_labels(footnote_label: str):
-    with _server() as setup:
+def test_autocompletes_footnote_labels(tmp_path_factory, footnote_label: str):
+    server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
+    file_path: Path = server_root / f"test_file.rst"
+    with _server(root_uri=file_path.as_uri()) as setup:
         server, stdout = setup
         _send_lsp_request(
             server,
@@ -120,7 +123,7 @@ def test_autocompletes_footnote_labels(footnote_label: str):
                     **{
                         "languageId": "rst",
                         "text": f"See [{footnote_label}]_\n\n.. [{footnote_label}] https://www.example.com\n",
-                        "uri": "file:///tmp/reStructuredText.rst",
+                        "uri": file_path.as_uri(),
                         "version": 0,
                     }
                 )
@@ -132,9 +135,7 @@ def test_autocompletes_footnote_labels(footnote_label: str):
             stdout,
             COMPLETION,
             CompletionParams(
-                text_document=TextDocumentIdentifier(
-                    uri="file:///tmp/reStructuredText.rst"
-                ),
+                text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
                 position=Position(line=42, character=42),
             ),
         ).result
@@ -149,9 +150,11 @@ def test_autocompletes_footnote_labels(footnote_label: str):
     assert suggestion.get("detail") == "https://www.example.com"
 
 
-def test_autocompletes_section_markup():
+def test_autocompletes_section_markup(tmp_path_factory):
     section_name = "MyHeading"
-    with _server() as setup:
+    server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
+    file_path: Path = server_root / f"test_file.rst"
+    with _server(root_uri=file_path.as_uri()) as setup:
         server, stdout = setup
         _send_lsp_request(
             server,
@@ -162,7 +165,7 @@ def test_autocompletes_section_markup():
                     **{
                         "languageId": "rst",
                         "text": section_name,
-                        "uri": "file:///tmp/reStructuredText.rst",
+                        "uri": file_path.as_uri(),
                         "version": 0,
                     }
                 )
@@ -174,9 +177,7 @@ def test_autocompletes_section_markup():
             stdout,
             COMPLETION,
             CompletionParams(
-                text_document=TextDocumentIdentifier(
-                    uri="file:///tmp/reStructuredText.rst"
-                ),
+                text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
                 position=Position(line=1, character=0),
             ),
         ).result
@@ -187,9 +188,10 @@ def test_autocompletes_section_markup():
     assert suggestion.get("insertText") == len(section_name) * "="
 
 
-def test_updates_completion_suggestions_upon_document_change(tmp_path):
-    file_path = tmp_path / f"{str(uuid.uuid4())}.rst"
-    with _server() as setup:
+def test_updates_completion_suggestions_upon_document_change(tmp_path_factory):
+    server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
+    file_path: Path = server_root / f"test_file.rst"
+    with _server(root_uri=file_path.as_uri()) as setup:
         server, stdout = setup
         _send_lsp_request(
             server,
