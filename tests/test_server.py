@@ -132,13 +132,9 @@ def test_autocompletes_footnote_labels(footnote_label: str):
         ).result
 
     assert len(response["items"]) > 0
-    assert any(
-        (
-            suggestion.get("label") == footnote_label.lower()
-            and suggestion.get("insertText") == f"{footnote_label.lower()}]_"
-            for suggestion in response["items"]
-        )
-    ), (
+    suggestion = response["items"][0]
+    assert suggestion.get("label") == footnote_label.lower(), (
         f"No autocomplete suggestion for {footnote_label}. "
         f"Available suggestions {', '.join((repr(d) for d in response['items']))}"
     )
+    assert suggestion.get("insertText") == f"{footnote_label.lower()}]_"
