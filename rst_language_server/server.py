@@ -17,14 +17,14 @@ index = {"footnotes": []}
 
 
 @rst_language_server.feature(TEXT_DOCUMENT_DID_OPEN)
-async def did_open(ls: LanguageServer, params: DidOpenTextDocumentParams):
+def did_open(ls: LanguageServer, params: DidOpenTextDocumentParams):
     file_content = params.text_document.text
     rst = parse_rst(file_content)
     rst.walk(FootnoteVisitor(rst))
 
 
 @rst_language_server.feature(COMPLETION, CompletionOptions(trigger_characters=["["]))
-async def completion(params: CompletionParams):
+def completion(params: CompletionParams):
     return CompletionList(
         is_incomplete=False,
         items=[

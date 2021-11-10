@@ -1,16 +1,13 @@
-import asyncio
+import json
 import os
 import re
-import string
+import uuid
 from datetime import timedelta
-from textwrap import dedent
-from threading import Thread
-from time import sleep
 
 import hypothesis.strategies as st
 import pytest
 from hypothesis import given, settings
-from pygls.lsp.methods import COMPLETION, EXIT, INITIALIZE, TEXT_DOCUMENT_DID_OPEN
+from pygls.lsp.methods import COMPLETION, INITIALIZE, TEXT_DOCUMENT_DID_OPEN
 from pygls.lsp.types import (
     ClientCapabilities,
     CompletionParams,
@@ -19,8 +16,12 @@ from pygls.lsp.types import (
     TextDocumentIdentifier,
     TextDocumentItem,
 )
-from pygls.protocol import DidOpenTextDocumentParams
-from pygls.server import LanguageServer
+from pygls.protocol import (
+    DidOpenTextDocumentParams,
+    JsonRPCProtocol,
+    JsonRPCRequestMessage,
+)
+from pygls.server import StdOutTransportAdapter, deserialize_message
 
 from rst_language_server.server import rst_language_server
 
@@ -39,55 +40,53 @@ footnote_label = simplename.map(lambda label: f"#{label}")
 
 @pytest.fixture(scope="module")
 def client_server():
-    # Establish pipes for communication between server and client
-    server_to_client_read, server_to_client_write = os.pipe()
-    client_to_server_read, client_to_server_write = os.pipe()
+    # Establish pipes for communication between server and tests
+    stdout_read_fd, stdout_write_fd = os.pipe()
+    stdin_read_fd, stdin_write_fd = os.pipe()
+    stdin_read, stdin_write = os.fdopen(stdin_read_fd, "rb"), os.fdopen(
+        stdin_write_fd, "wb"
+    )
+    stdout_read, stdout_write = os.fdopen(stdout_read_fd, "rb"), os.fdopen(
+        stdout_write_fd, "wb"
+    )
 
     server = rst_language_server
-    server.server_thread = Thread(
-        target=server.start_io,
-        args=(
-            os.fdopen(client_to_server_read, "rb"),
-            os.fdopen(server_to_client_write, "wb"),
-        ),
-    )
-    server.server_thread.daemon = True
+    transport = StdOutTransportAdapter(stdin_read, stdout_write)
+    server.lsp.connection_made(transport)
 
-    client = LanguageServer(asyncio.new_event_loop())
-    client.server_thread = Thread(
-        target=client.start_io,
-        args=(
-            os.fdopen(server_to_client_read, "rb"),
-            os.fdopen(client_to_server_write, "wb"),
-        ),
-    )
-    client.server_thread.daemon = True
-
-    server.server_thread.start()
-    client.server_thread.start()
-    sleep(0.5)
-
-    client.lsp.send_request(
-        INITIALIZE,
-        InitializeParams(
+    request = JsonRPCRequestMessage(
+        id=str(uuid.uuid4()),
+        jsonrpc=JsonRPCProtocol.VERSION,
+        method=INITIALIZE,
+        params=InitializeParams(
             process_id=42, root_uri="file:///tmp", capabilities=ClientCapabilities()
         ),
-    ).result(timeout=5.0)
-
-    yield client, server
-
-    client.lsp.notify(EXIT)
-    server.server_thread.join(timeout=2.0)
-    client.server_thread.join(timeout=2.0)
+    )
+    body = request.json(by_alias=True, exclude_unset=True).encode(
+        JsonRPCProtocol.CHARSET
+    )
+    header = (
+        f"Content-Length: {len(body)}\r\n"
+        f"Content-Type: {JsonRPCProtocol.CONTENT_TYPE}; charset={JsonRPCProtocol.CHARSET}\r\n\r\n"
+    ).encode(JsonRPCProtocol.CHARSET)
+    server.lsp.data_received(header + body)
+    content_length_header = stdout_read.readline()
+    content_length = int(content_length_header.split()[-1])
+    while stdout_read.readline().strip():
+        pass
+    stdout_read.read(content_length)
+    return server, stdin_write, stdout_read
 
 
 @settings(deadline=timedelta(seconds=0.7))
 @given(footnote_label=footnote_label)
 def test_autocompletes_numbered_footnotes(client_server, footnote_label: str):
-    client, server = client_server
-    client.lsp.send_request(
-        TEXT_DOCUMENT_DID_OPEN,
-        DidOpenTextDocumentParams(
+    server, stdin, stdout = client_server
+    request = JsonRPCRequestMessage(
+        id=str(uuid.uuid4()),
+        jsonrpc=JsonRPCProtocol.VERSION,
+        method=TEXT_DOCUMENT_DID_OPEN,
+        params=DidOpenTextDocumentParams(
             text_document=TextDocumentItem(
                 **{
                     "languageId": "rst",
@@ -97,19 +96,46 @@ def test_autocompletes_numbered_footnotes(client_server, footnote_label: str):
                 }
             )
         ),
-    ).result(timeout=5.0)
+    )
+    body = request.json(by_alias=True, exclude_unset=True).encode(
+        JsonRPCProtocol.CHARSET
+    )
+    header = (
+        f"Content-Length: {len(body)}\r\n"
+        f"Content-Type: {JsonRPCProtocol.CONTENT_TYPE}; charset={JsonRPCProtocol.CHARSET}\r\n\r\n"
+    ).encode(JsonRPCProtocol.CHARSET)
+    server.lsp.data_received(header + body)
+    content_length_header = stdout.readline()
+    content_length = int(content_length_header.split()[-1])
+    while stdout.readline().strip():
+        pass
+    stdout.read(content_length)
 
-    sleep(0.5)
-
-    response = client.lsp.send_request(
-        COMPLETION,
-        CompletionParams(
+    request = JsonRPCRequestMessage(
+        id=str(uuid.uuid4()),
+        jsonrpc=JsonRPCProtocol.VERSION,
+        method=COMPLETION,
+        params=CompletionParams(
             text_document=TextDocumentIdentifier(
                 uri="file:///tmp/reStructuredText.rst"
             ),
             position=Position(line=42, character=42),
         ),
-    ).result(timeout=5.0)
+    )
+    body = request.json(by_alias=True, exclude_unset=True).encode(
+        JsonRPCProtocol.CHARSET
+    )
+    header = (
+        f"Content-Length: {len(body)}\r\n"
+        f"Content-Type: {JsonRPCProtocol.CONTENT_TYPE}; charset={JsonRPCProtocol.CHARSET}\r\n\r\n"
+    ).encode(JsonRPCProtocol.CHARSET)
+    server.lsp.data_received(header + body)
+    content_length_header = stdout.readline()
+    content_length = int(content_length_header.split()[-1])
+    while stdout.readline().strip():
+        pass
+    response_data = stdout.read(content_length)
+    response = deserialize_message(json.loads(response_data)).result
 
     assert len(response["items"]) > 0
     suggested_labels = [suggestion.get("label") for suggestion in response["items"]]
