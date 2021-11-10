@@ -141,7 +141,7 @@ def test_autocompletes_footnote_labels(
                 text_document=TextDocumentItem(
                     **{
                         "languageId": "rst",
-                        "text": f"See [{footnote_label}]_\n\n.. [{footnote_label}] {footnote_content}\n",
+                        "text": f".. [{footnote_label}] {footnote_content}\n",
                         "uri": file_path.as_uri(),
                         "version": 0,
                     }
@@ -155,7 +155,7 @@ def test_autocompletes_footnote_labels(
             COMPLETION,
             CompletionParams(
                 text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
-                position=Position(line=3, character=0),
+                position=Position(line=1, character=0),
             ),
         ).result
 
