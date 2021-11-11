@@ -133,7 +133,7 @@ def test_autocompletes_footnote_labels(
 ):
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
-    with _server(root_uri=file_path.as_uri()) as setup:
+    with _server(root_uri=server_root.as_uri()) as setup:
         server, stdout = setup
         _send_lsp_request(
             server,
@@ -183,7 +183,7 @@ def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
     adornment = existing_adornment_chars * adornment_char
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
-    with _server(root_uri=file_path.as_uri()) as setup:
+    with _server(root_uri=server_root.as_uri()) as setup:
         server, stdout = setup
         _send_lsp_request(
             server,
@@ -225,7 +225,7 @@ def test_does_not_autocomplete_title_adornment_when_adornment_chars_are_differen
 ):
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
-    with _server(root_uri=file_path.as_uri()) as setup:
+    with _server(root_uri=server_root.as_uri()) as setup:
         server, stdout = setup
         _send_lsp_request(
             server,
@@ -266,7 +266,7 @@ def test_does_not_autocomplete_title_adornment_when_adornment_chars_are_invalid(
 ):
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
-    with _server(root_uri=file_path.as_uri()) as setup:
+    with _server(root_uri=server_root.as_uri()) as setup:
         server, stdout = setup
         _send_lsp_request(
             server,
@@ -300,7 +300,7 @@ def test_does_not_autocomplete_title_adornment_when_adornment_chars_are_invalid(
 def test_updates_completion_suggestions_upon_document_change(tmp_path_factory):
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
-    with _server(root_uri=file_path.as_uri()) as setup:
+    with _server(root_uri=server_root.as_uri()) as setup:
         server, stdout = setup
         _send_lsp_request(
             server,
