@@ -58,6 +58,8 @@ footnote_content = (
     .map(lambda text: text.replace("_", ""))
     .map(lambda text: text.strip())
     .filter(lambda text: text)
+    .filter(lambda text: text not in "-+")
+    .filter(lambda text: text[-1] != ".")  # e.g. "0."
 )
 
 # Generously excluding all control characters from the title characters, even though
