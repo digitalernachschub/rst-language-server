@@ -97,6 +97,8 @@ def create_server() -> LanguageServer:
         if not consists_of_one_char:
             return ()
         previous_line_length = len(lines[previous_line_index])
+        if current_line_length >= previous_line_length:
+            return ()
         return (
             CompletionItem(
                 label=3 * adornment_char,

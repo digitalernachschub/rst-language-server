@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, BinaryIO, Callable, Tuple
 
 import hypothesis.strategies as st
-from hypothesis import given
+from hypothesis import assume, given
 from pygls.lsp.methods import (
     COMPLETION,
     INITIALIZE,
@@ -176,9 +176,11 @@ def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
     tmp_path_factory, data
 ):
     _section_title: str = data.draw(section_title)
+    # No autocompletion when adornment has reached title length
+    assume(len(_section_title) > 1)
     adornment_char: str = data.draw(section_adornment_char)
     existing_adornment_chars: int = data.draw(
-        st.integers(min_value=1, max_value=len(_section_title))
+        st.integers(min_value=1, max_value=len(_section_title) - 1)
     )
     adornment = existing_adornment_chars * adornment_char
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
@@ -218,6 +220,47 @@ def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
         suggestion.get("insertText")
         == (len(_section_title) - existing_adornment_chars) * adornment_char
     )
+
+
+@given(
+    section_title=section_title,
+    excess_adornment_length=st.integers(min_value=0, max_value=3),
+)
+def test_does_not_autocompletes_title_adornment_when_adornment_has_at_least_title_length(
+    tmp_path_factory, section_title, excess_adornment_length
+):
+    adornment = (len(section_title) + excess_adornment_length) * "="
+    server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
+    file_path: Path = server_root / f"test_file.rst"
+    with _server(root_uri=server_root.as_uri()) as setup:
+        server, stdout = setup
+        _send_lsp_request(
+            server,
+            stdout,
+            TEXT_DOCUMENT_DID_OPEN,
+            DidOpenTextDocumentParams(
+                text_document=TextDocumentItem(
+                    **{
+                        "languageId": "rst",
+                        "text": f"{section_title}\n{adornment}",
+                        "uri": file_path.as_uri(),
+                        "version": 0,
+                    }
+                )
+            ),
+        )
+
+        response = _send_lsp_request(
+            server,
+            stdout,
+            COMPLETION,
+            CompletionParams(
+                text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
+                position=Position(line=1, character=len(adornment)),
+            ),
+        ).result
+
+    assert len(response["items"]) == 0
 
 
 def test_does_not_autocomplete_title_adornment_when_adornment_chars_are_different(
