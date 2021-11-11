@@ -1,3 +1,4 @@
+import string
 from typing import Iterable
 
 from docutils.frontend import OptionParser
@@ -88,10 +89,12 @@ def create_server() -> LanguageServer:
             return ()
         lines = document_content.splitlines()
         adornment_char = lines[current_line_index][-1]
+        if not adornment_char or adornment_char not in string.punctuation:
+            return ()
         consists_of_one_char = (
             lines[current_line_index] == len(lines[current_line_index]) * adornment_char
         )
-        if not adornment_char or not consists_of_one_char:
+        if not consists_of_one_char:
             return ()
         previous_line_length = len(lines[previous_line_index])
         return (

@@ -254,6 +254,47 @@ def test_does_not_autocomplete_title_adornment_when_adornment_chars_are_differen
     assert len(response["items"]) == 0
 
 
+@given(
+    invalid_adornment_char=st.characters(
+        blacklist_categories=["Cc", "Cs"], blacklist_characters=string.punctuation
+    )
+)
+def test_does_not_autocomplete_title_adornment_when_adornment_chars_are_invalid(
+    tmp_path_factory, invalid_adornment_char: str
+):
+    server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
+    file_path: Path = server_root / f"test_file.rst"
+    with _server(root_uri=file_path.as_uri()) as setup:
+        server, stdout = setup
+        _send_lsp_request(
+            server,
+            stdout,
+            TEXT_DOCUMENT_DID_OPEN,
+            DidOpenTextDocumentParams(
+                text_document=TextDocumentItem(
+                    **{
+                        "languageId": "rst",
+                        "text": f"MyTitle\n{invalid_adornment_char}",
+                        "uri": file_path.as_uri(),
+                        "version": 0,
+                    }
+                )
+            ),
+        )
+
+        response = _send_lsp_request(
+            server,
+            stdout,
+            COMPLETION,
+            CompletionParams(
+                text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
+                position=Position(line=1, character=1),
+            ),
+        ).result
+
+    assert len(response["items"]) == 0
+
+
 def test_updates_completion_suggestions_upon_document_change(tmp_path_factory):
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
