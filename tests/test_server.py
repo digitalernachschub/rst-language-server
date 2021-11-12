@@ -85,9 +85,8 @@ def _server(root_uri: str) -> Tuple[LanguageServer, BinaryIO]:
     transport = StdOutTransportAdapter(stdin_read, stdout_write)
     server.lsp.connection_made(transport)
 
-    _send_lsp_request(
-        server,
-        stdout_read,
+    client = LspClient(server, stdout_read)
+    client._send_lsp_request(
         INITIALIZE,
         InitializeParams(
             process_id=42, root_uri=root_uri, capabilities=ClientCapabilities()
@@ -100,31 +99,34 @@ def _server(root_uri: str) -> Tuple[LanguageServer, BinaryIO]:
     stdout_write.close()
 
 
-def _send_lsp_request(
-    server: LanguageServer, stdout: BinaryIO, method: str, params: Any
-) -> JsonRPCResponseMessage:
-    request = JsonRPCRequestMessage(
-        id=str(uuid.uuid4()),
-        jsonrpc=JsonRPCProtocol.VERSION,
-        method=method,
-        params=params,
-    )
-    body = request.json(by_alias=True, exclude_unset=True).encode(
-        JsonRPCProtocol.CHARSET
-    )
-    header = (
-        f"Content-Length: {len(body)}\r\n"
-        f"Content-Type: {JsonRPCProtocol.CONTENT_TYPE}; charset={JsonRPCProtocol.CHARSET}\r\n\r\n"
-    ).encode(JsonRPCProtocol.CHARSET)
-    server.lsp.data_received(header + body)
-    content_length_header = stdout.readline()
-    content_length = int(content_length_header.split()[-1])
-    while stdout.readline().strip():
-        # Read all header lines until encountering an empty line
-        pass
-    response_data = stdout.read(content_length)
-    response = deserialize_message(json.loads(response_data))
-    return response
+class LspClient:
+    def __init__(self, server: LanguageServer, server_stdout: BinaryIO):
+        self.server = server
+        self.stdout = server_stdout
+
+    def _send_lsp_request(self, method: str, params: Any) -> JsonRPCResponseMessage:
+        request = JsonRPCRequestMessage(
+            id=str(uuid.uuid4()),
+            jsonrpc=JsonRPCProtocol.VERSION,
+            method=method,
+            params=params,
+        )
+        body = request.json(by_alias=True, exclude_unset=True).encode(
+            JsonRPCProtocol.CHARSET
+        )
+        header = (
+            f"Content-Length: {len(body)}\r\n"
+            f"Content-Type: {JsonRPCProtocol.CONTENT_TYPE}; charset={JsonRPCProtocol.CHARSET}\r\n\r\n"
+        ).encode(JsonRPCProtocol.CHARSET)
+        self.server.lsp.data_received(header + body)
+        content_length_header = self.stdout.readline()
+        content_length = int(content_length_header.split()[-1])
+        while self.stdout.readline().strip():
+            # Read all header lines until encountering an empty line
+            pass
+        response_data = self.stdout.read(content_length)
+        response = deserialize_message(json.loads(response_data))
+        return response
 
 
 @given(footnote_label=footnote_label, footnote_content=footnote_content)
@@ -134,10 +136,8 @@ def test_autocompletes_footnote_labels(
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
     with _server(root_uri=server_root.as_uri()) as setup:
-        server, stdout = setup
-        _send_lsp_request(
-            server,
-            stdout,
+        client = LspClient(*setup)
+        client._send_lsp_request(
             TEXT_DOCUMENT_DID_OPEN,
             DidOpenTextDocumentParams(
                 text_document=TextDocumentItem(
@@ -151,9 +151,7 @@ def test_autocompletes_footnote_labels(
             ),
         )
 
-        response = _send_lsp_request(
-            server,
-            stdout,
+        response = client._send_lsp_request(
             COMPLETION,
             CompletionParams(
                 text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
@@ -186,10 +184,8 @@ def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
     with _server(root_uri=server_root.as_uri()) as setup:
-        server, stdout = setup
-        _send_lsp_request(
-            server,
-            stdout,
+        client = LspClient(*setup)
+        client._send_lsp_request(
             TEXT_DOCUMENT_DID_OPEN,
             DidOpenTextDocumentParams(
                 text_document=TextDocumentItem(
@@ -203,9 +199,7 @@ def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
             ),
         )
 
-        response = _send_lsp_request(
-            server,
-            stdout,
+        response = client._send_lsp_request(
             COMPLETION,
             CompletionParams(
                 text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
@@ -233,10 +227,8 @@ def test_does_not_autocompletes_title_adornment_when_adornment_has_at_least_titl
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
     with _server(root_uri=server_root.as_uri()) as setup:
-        server, stdout = setup
-        _send_lsp_request(
-            server,
-            stdout,
+        client = LspClient(*setup)
+        client._send_lsp_request(
             TEXT_DOCUMENT_DID_OPEN,
             DidOpenTextDocumentParams(
                 text_document=TextDocumentItem(
@@ -250,9 +242,7 @@ def test_does_not_autocompletes_title_adornment_when_adornment_has_at_least_titl
             ),
         )
 
-        response = _send_lsp_request(
-            server,
-            stdout,
+        response = client._send_lsp_request(
             COMPLETION,
             CompletionParams(
                 text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
@@ -269,10 +259,8 @@ def test_does_not_autocomplete_title_adornment_when_adornment_chars_are_differen
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
     with _server(root_uri=server_root.as_uri()) as setup:
-        server, stdout = setup
-        _send_lsp_request(
-            server,
-            stdout,
+        client = LspClient(*setup)
+        client._send_lsp_request(
             TEXT_DOCUMENT_DID_OPEN,
             DidOpenTextDocumentParams(
                 text_document=TextDocumentItem(
@@ -286,9 +274,7 @@ def test_does_not_autocomplete_title_adornment_when_adornment_chars_are_differen
             ),
         )
 
-        response = _send_lsp_request(
-            server,
-            stdout,
+        response = client._send_lsp_request(
             COMPLETION,
             CompletionParams(
                 text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
@@ -310,10 +296,8 @@ def test_does_not_autocomplete_title_adornment_when_adornment_chars_are_invalid(
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
     with _server(root_uri=server_root.as_uri()) as setup:
-        server, stdout = setup
-        _send_lsp_request(
-            server,
-            stdout,
+        client = LspClient(*setup)
+        client._send_lsp_request(
             TEXT_DOCUMENT_DID_OPEN,
             DidOpenTextDocumentParams(
                 text_document=TextDocumentItem(
@@ -327,9 +311,7 @@ def test_does_not_autocomplete_title_adornment_when_adornment_chars_are_invalid(
             ),
         )
 
-        response = _send_lsp_request(
-            server,
-            stdout,
+        response = client._send_lsp_request(
             COMPLETION,
             CompletionParams(
                 text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
@@ -344,10 +326,8 @@ def test_updates_completion_suggestions_upon_document_change(tmp_path_factory):
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
     with _server(root_uri=server_root.as_uri()) as setup:
-        server, stdout = setup
-        _send_lsp_request(
-            server,
-            stdout,
+        client = LspClient(*setup)
+        client._send_lsp_request(
             TEXT_DOCUMENT_DID_OPEN,
             DidOpenTextDocumentParams(
                 text_document=TextDocumentItem(
@@ -360,9 +340,7 @@ def test_updates_completion_suggestions_upon_document_change(tmp_path_factory):
                 )
             ),
         )
-        _send_lsp_request(
-            server,
-            stdout,
+        client._send_lsp_request(
             TEXT_DOCUMENT_DID_CHANGE,
             DidChangeTextDocumentParams(
                 text_document=VersionedTextDocumentIdentifier(
@@ -377,9 +355,7 @@ def test_updates_completion_suggestions_upon_document_change(tmp_path_factory):
             ),
         )
 
-        response = _send_lsp_request(
-            server,
-            stdout,
+        response = client._send_lsp_request(
             COMPLETION,
             CompletionParams(
                 text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
