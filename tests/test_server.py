@@ -122,6 +122,17 @@ class LspClient:
             ),
         )
 
+    def complete(
+        self, uri: str, *, line: int, character: int
+    ) -> JsonRPCResponseMessage:
+        return self._send_lsp_request(
+            COMPLETION,
+            CompletionParams(
+                text_document=TextDocumentIdentifier(uri=uri),
+                position=Position(line=line, character=character),
+            ),
+        )
+
     def _send_lsp_request(self, method: str, params: Any) -> JsonRPCResponseMessage:
         request = JsonRPCRequestMessage(
             id=str(uuid.uuid4()),
@@ -158,13 +169,7 @@ def test_autocompletes_footnote_labels(
             uri=file_path.as_uri(), text=f".. [{footnote_label}] {footnote_content}\n"
         )
 
-        response = client._send_lsp_request(
-            COMPLETION,
-            CompletionParams(
-                text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
-                position=Position(line=1, character=0),
-            ),
-        ).result
+        response = client.complete(file_path.as_uri(), line=1, character=0).result
 
     assert len(response["items"]) > 0
     suggestion = response["items"][0]
@@ -193,12 +198,8 @@ def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
     with _client(root_uri=server_root.as_uri()) as client:
         client.open(uri=file_path.as_uri(), text=f"{_section_title}\n{adornment}")
 
-        response = client._send_lsp_request(
-            COMPLETION,
-            CompletionParams(
-                text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
-                position=Position(line=1, character=existing_adornment_chars),
-            ),
+        response = client.complete(
+            file_path.as_uri(), line=1, character=existing_adornment_chars
         ).result
 
     assert len(response["items"]) > 0
@@ -223,12 +224,8 @@ def test_does_not_autocompletes_title_adornment_when_adornment_has_at_least_titl
     with _client(root_uri=server_root.as_uri()) as client:
         client.open(uri=file_path.as_uri(), text=f"{section_title}\n{adornment}")
 
-        response = client._send_lsp_request(
-            COMPLETION,
-            CompletionParams(
-                text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
-                position=Position(line=1, character=len(adornment)),
-            ),
+        response = client.complete(
+            file_path.as_uri(), line=1, character=len(adornment)
         ).result
 
     assert len(response["items"]) == 0
@@ -242,13 +239,7 @@ def test_does_not_autocomplete_title_adornment_when_adornment_chars_are_differen
     with _client(root_uri=server_root.as_uri()) as client:
         client.open(uri=file_path.as_uri(), text="MyTitle\n--=")
 
-        response = client._send_lsp_request(
-            COMPLETION,
-            CompletionParams(
-                text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
-                position=Position(line=1, character=3),
-            ),
-        ).result
+        response = client.complete(file_path.as_uri(), line=1, character=3).result
 
     assert len(response["items"]) == 0
 
@@ -266,13 +257,7 @@ def test_does_not_autocomplete_title_adornment_when_adornment_chars_are_invalid(
     with _client(root_uri=server_root.as_uri()) as client:
         client.open(uri=file_path.as_uri(), text=f"MyTitle\n{invalid_adornment_char}")
 
-        response = client._send_lsp_request(
-            COMPLETION,
-            CompletionParams(
-                text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
-                position=Position(line=1, character=1),
-            ),
-        ).result
+        response = client.complete(file_path.as_uri(), line=1, character=1).result
 
     assert len(response["items"]) == 0
 
@@ -297,12 +282,6 @@ def test_updates_completion_suggestions_upon_document_change(tmp_path_factory):
             ),
         )
 
-        response = client._send_lsp_request(
-            COMPLETION,
-            CompletionParams(
-                text_document=TextDocumentIdentifier(uri=file_path.as_uri()),
-                position=Position(line=1, character=0),
-            ),
-        ).result
+        response = client.complete(file_path.as_uri(), line=1, character=0).result
 
     assert len(response["items"]) > 0
