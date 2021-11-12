@@ -70,7 +70,7 @@ section_adornment_char = st.sampled_from(string.punctuation)
 
 
 @contextmanager
-def _client(root_uri: str) -> "LspClient":
+def _client() -> "LspClient":
     # Establish pipes for communication between server and tests
     stdout_read_fd, stdout_write_fd = os.pipe()
     stdin_read_fd, stdin_write_fd = os.pipe()
@@ -86,7 +86,6 @@ def _client(root_uri: str) -> "LspClient":
     server.lsp.connection_made(transport)
 
     client = LspClient(server, stdout_read)
-    client.initialize(root_uri)
     yield client
     stdin_read.close()
     stdin_write.close()
@@ -176,7 +175,8 @@ def test_autocompletes_footnote_labels(
 ):
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
-    with _client(root_uri=server_root.as_uri()) as client:
+    with _client() as client:
+        client.initialize(server_root.as_uri())
         client.open(
             uri=file_path.as_uri(), text=f".. [{footnote_label}] {footnote_content}\n"
         )
@@ -207,7 +207,8 @@ def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
     adornment = existing_adornment_chars * adornment_char
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
-    with _client(root_uri=server_root.as_uri()) as client:
+    with _client() as client:
+        client.initialize(server_root.as_uri())
         client.open(uri=file_path.as_uri(), text=f"{_section_title}\n{adornment}")
 
         response = client.complete(
@@ -233,7 +234,8 @@ def test_does_not_autocompletes_title_adornment_when_adornment_has_at_least_titl
     adornment = (len(section_title) + excess_adornment_length) * "="
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
-    with _client(root_uri=server_root.as_uri()) as client:
+    with _client() as client:
+        client.initialize(server_root.as_uri())
         client.open(uri=file_path.as_uri(), text=f"{section_title}\n{adornment}")
 
         response = client.complete(
@@ -248,7 +250,8 @@ def test_does_not_autocomplete_title_adornment_when_adornment_chars_are_differen
 ):
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
-    with _client(root_uri=server_root.as_uri()) as client:
+    with _client() as client:
+        client.initialize(server_root.as_uri())
         client.open(uri=file_path.as_uri(), text="MyTitle\n--=")
 
         response = client.complete(file_path.as_uri(), line=1, character=3).result
@@ -266,7 +269,8 @@ def test_does_not_autocomplete_title_adornment_when_adornment_chars_are_invalid(
 ):
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
-    with _client(root_uri=server_root.as_uri()) as client:
+    with _client() as client:
+        client.initialize(server_root.as_uri())
         client.open(uri=file_path.as_uri(), text=f"MyTitle\n{invalid_adornment_char}")
 
         response = client.complete(file_path.as_uri(), line=1, character=1).result
@@ -277,7 +281,8 @@ def test_does_not_autocomplete_title_adornment_when_adornment_chars_are_invalid(
 def test_updates_completion_suggestions_upon_document_change(tmp_path_factory):
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
-    with _client(root_uri=server_root.as_uri()) as client:
+    with _client() as client:
+        client.initialize(server_root.as_uri())
         client.open(uri=file_path.as_uri(), text="")
         client.change(file_path.as_uri(), text=".. [#MyNote] https://www.example.com\n")
 
