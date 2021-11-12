@@ -70,7 +70,7 @@ section_adornment_char = st.sampled_from(string.punctuation)
 
 
 @contextmanager
-def _server(root_uri: str) -> Tuple[LanguageServer, BinaryIO]:
+def _client(root_uri: str) -> "LspClient":
     # Establish pipes for communication between server and tests
     stdout_read_fd, stdout_write_fd = os.pipe()
     stdin_read_fd, stdin_write_fd = os.pipe()
@@ -92,7 +92,7 @@ def _server(root_uri: str) -> Tuple[LanguageServer, BinaryIO]:
             process_id=42, root_uri=root_uri, capabilities=ClientCapabilities()
         ),
     )
-    yield server, stdout_read
+    yield client
     stdin_read.close()
     stdin_write.close()
     stdout_read.close()
@@ -135,8 +135,7 @@ def test_autocompletes_footnote_labels(
 ):
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
-    with _server(root_uri=server_root.as_uri()) as setup:
-        client = LspClient(*setup)
+    with _client(root_uri=server_root.as_uri()) as client:
         client._send_lsp_request(
             TEXT_DOCUMENT_DID_OPEN,
             DidOpenTextDocumentParams(
@@ -183,8 +182,7 @@ def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
     adornment = existing_adornment_chars * adornment_char
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
-    with _server(root_uri=server_root.as_uri()) as setup:
-        client = LspClient(*setup)
+    with _client(root_uri=server_root.as_uri()) as client:
         client._send_lsp_request(
             TEXT_DOCUMENT_DID_OPEN,
             DidOpenTextDocumentParams(
@@ -226,8 +224,7 @@ def test_does_not_autocompletes_title_adornment_when_adornment_has_at_least_titl
     adornment = (len(section_title) + excess_adornment_length) * "="
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
-    with _server(root_uri=server_root.as_uri()) as setup:
-        client = LspClient(*setup)
+    with _client(root_uri=server_root.as_uri()) as client:
         client._send_lsp_request(
             TEXT_DOCUMENT_DID_OPEN,
             DidOpenTextDocumentParams(
@@ -258,8 +255,7 @@ def test_does_not_autocomplete_title_adornment_when_adornment_chars_are_differen
 ):
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
-    with _server(root_uri=server_root.as_uri()) as setup:
-        client = LspClient(*setup)
+    with _client(root_uri=server_root.as_uri()) as client:
         client._send_lsp_request(
             TEXT_DOCUMENT_DID_OPEN,
             DidOpenTextDocumentParams(
@@ -295,8 +291,7 @@ def test_does_not_autocomplete_title_adornment_when_adornment_chars_are_invalid(
 ):
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
-    with _server(root_uri=server_root.as_uri()) as setup:
-        client = LspClient(*setup)
+    with _client(root_uri=server_root.as_uri()) as client:
         client._send_lsp_request(
             TEXT_DOCUMENT_DID_OPEN,
             DidOpenTextDocumentParams(
@@ -325,8 +320,7 @@ def test_does_not_autocomplete_title_adornment_when_adornment_chars_are_invalid(
 def test_updates_completion_suggestions_upon_document_change(tmp_path_factory):
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
-    with _server(root_uri=server_root.as_uri()) as setup:
-        client = LspClient(*setup)
+    with _client(root_uri=server_root.as_uri()) as client:
         client._send_lsp_request(
             TEXT_DOCUMENT_DID_OPEN,
             DidOpenTextDocumentParams(
