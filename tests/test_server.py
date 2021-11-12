@@ -86,12 +86,7 @@ def _client(root_uri: str) -> "LspClient":
     server.lsp.connection_made(transport)
 
     client = LspClient(server, stdout_read)
-    client._send_lsp_request(
-        INITIALIZE,
-        InitializeParams(
-            process_id=42, root_uri=root_uri, capabilities=ClientCapabilities()
-        ),
-    )
+    client.initialize(root_uri)
     yield client
     stdin_read.close()
     stdin_write.close()
@@ -103,6 +98,14 @@ class LspClient:
     def __init__(self, server: LanguageServer, server_stdout: BinaryIO):
         self.server = server
         self.stdout = server_stdout
+
+    def initialize(self, root_uri: str) -> JsonRPCResponseMessage:
+        return self._send_lsp_request(
+            INITIALIZE,
+            InitializeParams(
+                process_id=42, root_uri=root_uri, capabilities=ClientCapabilities()
+            ),
+        )
 
     def _send_lsp_request(self, method: str, params: Any) -> JsonRPCResponseMessage:
         request = JsonRPCRequestMessage(
