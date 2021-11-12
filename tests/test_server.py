@@ -122,6 +122,18 @@ class LspClient:
             ),
         )
 
+    def change(self, uri: str, text: str) -> JsonRPCResponseMessage:
+        return self._send_lsp_request(
+            TEXT_DOCUMENT_DID_CHANGE,
+            DidChangeTextDocumentParams(
+                text_document=VersionedTextDocumentIdentifier(
+                    uri=uri,
+                    version=1,
+                ),
+                content_changes=[TextDocumentContentChangeTextEvent(text=text)],
+            ),
+        )
+
     def complete(
         self, uri: str, *, line: int, character: int
     ) -> JsonRPCResponseMessage:
@@ -267,20 +279,7 @@ def test_updates_completion_suggestions_upon_document_change(tmp_path_factory):
     file_path: Path = server_root / f"test_file.rst"
     with _client(root_uri=server_root.as_uri()) as client:
         client.open(uri=file_path.as_uri(), text="")
-        client._send_lsp_request(
-            TEXT_DOCUMENT_DID_CHANGE,
-            DidChangeTextDocumentParams(
-                text_document=VersionedTextDocumentIdentifier(
-                    uri=file_path.as_uri(),
-                    version=1,
-                ),
-                content_changes=[
-                    TextDocumentContentChangeTextEvent(
-                        text=".. [#MyNote] https://www.example.com\n"
-                    )
-                ],
-            ),
-        )
+        client.change(file_path.as_uri(), text=".. [#MyNote] https://www.example.com\n")
 
         response = client.complete(file_path.as_uri(), line=1, character=0).result
 
