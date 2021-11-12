@@ -107,6 +107,21 @@ class LspClient:
             ),
         )
 
+    def open(self, uri: str, text: str) -> JsonRPCResponseMessage:
+        return self._send_lsp_request(
+            TEXT_DOCUMENT_DID_OPEN,
+            DidOpenTextDocumentParams(
+                text_document=TextDocumentItem(
+                    **{
+                        "languageId": "rst",
+                        "text": text,
+                        "uri": uri,
+                        "version": 0,
+                    }
+                )
+            ),
+        )
+
     def _send_lsp_request(self, method: str, params: Any) -> JsonRPCResponseMessage:
         request = JsonRPCRequestMessage(
             id=str(uuid.uuid4()),
@@ -139,18 +154,8 @@ def test_autocompletes_footnote_labels(
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
     with _client(root_uri=server_root.as_uri()) as client:
-        client._send_lsp_request(
-            TEXT_DOCUMENT_DID_OPEN,
-            DidOpenTextDocumentParams(
-                text_document=TextDocumentItem(
-                    **{
-                        "languageId": "rst",
-                        "text": f".. [{footnote_label}] {footnote_content}\n",
-                        "uri": file_path.as_uri(),
-                        "version": 0,
-                    }
-                )
-            ),
+        client.open(
+            uri=file_path.as_uri(), text=f".. [{footnote_label}] {footnote_content}\n"
         )
 
         response = client._send_lsp_request(
@@ -186,19 +191,7 @@ def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
     with _client(root_uri=server_root.as_uri()) as client:
-        client._send_lsp_request(
-            TEXT_DOCUMENT_DID_OPEN,
-            DidOpenTextDocumentParams(
-                text_document=TextDocumentItem(
-                    **{
-                        "languageId": "rst",
-                        "text": f"{_section_title}\n{adornment}",
-                        "uri": file_path.as_uri(),
-                        "version": 0,
-                    }
-                )
-            ),
-        )
+        client.open(uri=file_path.as_uri(), text=f"{_section_title}\n{adornment}")
 
         response = client._send_lsp_request(
             COMPLETION,
@@ -228,19 +221,7 @@ def test_does_not_autocompletes_title_adornment_when_adornment_has_at_least_titl
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
     with _client(root_uri=server_root.as_uri()) as client:
-        client._send_lsp_request(
-            TEXT_DOCUMENT_DID_OPEN,
-            DidOpenTextDocumentParams(
-                text_document=TextDocumentItem(
-                    **{
-                        "languageId": "rst",
-                        "text": f"{section_title}\n{adornment}",
-                        "uri": file_path.as_uri(),
-                        "version": 0,
-                    }
-                )
-            ),
-        )
+        client.open(uri=file_path.as_uri(), text=f"{section_title}\n{adornment}")
 
         response = client._send_lsp_request(
             COMPLETION,
@@ -259,19 +240,7 @@ def test_does_not_autocomplete_title_adornment_when_adornment_chars_are_differen
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
     with _client(root_uri=server_root.as_uri()) as client:
-        client._send_lsp_request(
-            TEXT_DOCUMENT_DID_OPEN,
-            DidOpenTextDocumentParams(
-                text_document=TextDocumentItem(
-                    **{
-                        "languageId": "rst",
-                        "text": f"MyTitle\n--=",
-                        "uri": file_path.as_uri(),
-                        "version": 0,
-                    }
-                )
-            ),
-        )
+        client.open(uri=file_path.as_uri(), text="MyTitle\n--=")
 
         response = client._send_lsp_request(
             COMPLETION,
@@ -295,19 +264,7 @@ def test_does_not_autocomplete_title_adornment_when_adornment_chars_are_invalid(
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
     with _client(root_uri=server_root.as_uri()) as client:
-        client._send_lsp_request(
-            TEXT_DOCUMENT_DID_OPEN,
-            DidOpenTextDocumentParams(
-                text_document=TextDocumentItem(
-                    **{
-                        "languageId": "rst",
-                        "text": f"MyTitle\n{invalid_adornment_char}",
-                        "uri": file_path.as_uri(),
-                        "version": 0,
-                    }
-                )
-            ),
-        )
+        client.open(uri=file_path.as_uri(), text=f"MyTitle\n{invalid_adornment_char}")
 
         response = client._send_lsp_request(
             COMPLETION,
@@ -324,19 +281,7 @@ def test_updates_completion_suggestions_upon_document_change(tmp_path_factory):
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
     with _client(root_uri=server_root.as_uri()) as client:
-        client._send_lsp_request(
-            TEXT_DOCUMENT_DID_OPEN,
-            DidOpenTextDocumentParams(
-                text_document=TextDocumentItem(
-                    **{
-                        "languageId": "rst",
-                        "text": "",
-                        "uri": file_path.as_uri(),
-                        "version": 0,
-                    }
-                )
-            ),
-        )
+        client.open(uri=file_path.as_uri(), text="")
         client._send_lsp_request(
             TEXT_DOCUMENT_DID_CHANGE,
             DidChangeTextDocumentParams(
