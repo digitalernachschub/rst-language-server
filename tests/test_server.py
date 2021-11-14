@@ -5,12 +5,15 @@ import string
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, BinaryIO, Callable, Tuple
+from textwrap import dedent
+from typing import Any, BinaryIO, List
 
 import hypothesis.strategies as st
 from hypothesis import assume, given
+from pydantic import parse_obj_as
 from pygls.lsp.methods import (
     COMPLETION,
+    DOCUMENT_SYMBOL,
     INITIALIZE,
     TEXT_DOCUMENT_DID_CHANGE,
     TEXT_DOCUMENT_DID_OPEN,
@@ -18,8 +21,11 @@ from pygls.lsp.methods import (
 from pygls.lsp.types import (
     ClientCapabilities,
     CompletionParams,
+    DocumentSymbol,
+    DocumentSymbolParams,
     InitializeParams,
     Position,
+    SymbolKind,
     TextDocumentContentChangeTextEvent,
     TextDocumentIdentifier,
     TextDocumentItem,
@@ -62,9 +68,13 @@ footnote_content = (
     .filter(lambda text: text[-1] != ".")  # e.g. "0."
 )
 
-# Generously excluding all control characters from the title characters, even though
-# there seems to be nothing in the docutils rst spec.
-section_title = st.text(st.characters(blacklist_categories=["Cc", "Cs"]), min_size=1)
+# Valid character set for section headers is unclear
+# See bug https://sourceforge.net/p/docutils/bugs/433/
+# Using regular alphanumeric characters until this is clarified
+section_title = st.text(
+    string.ascii_letters + string.digits,
+    min_size=1,
+)
 # https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#footnote-reference-6
 section_adornment_char = st.sampled_from(string.punctuation)
 
@@ -131,6 +141,12 @@ class LspClient:
                 ),
                 content_changes=[TextDocumentContentChangeTextEvent(text=text)],
             ),
+        )
+
+    def symbols(self, uri: str) -> JsonRPCResponseMessage:
+        return self._send_lsp_request(
+            DOCUMENT_SYMBOL,
+            DocumentSymbolParams(text_document=TextDocumentIdentifier(uri=uri)),
         )
 
     def complete(
@@ -289,3 +305,29 @@ def test_updates_completion_suggestions_upon_document_change(tmp_path_factory):
         response = client.complete(file_path.as_uri(), line=1, character=0).result
 
     assert len(response["items"]) > 0
+
+
+@given(section_title=section_title)
+def test_reports_section_title_as_module_symbol(tmp_path_factory, section_title: str):
+    text = dedent(
+        f"""\
+            {section_title}
+            {len(section_title) * "="}
+        """
+    )
+    server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
+    file_path: Path = server_root / f"test_file.rst"
+    with _client() as client:
+        client.initialize(server_root.as_uri())
+        client.open(uri=file_path.as_uri(), text=text)
+
+        response = client.symbols(file_path.as_uri()).result
+
+    symbols = parse_obj_as(List[DocumentSymbol], response)
+    assert len(symbols) == 1
+    for symbol in symbols:
+        assert symbol.name == section_title
+        assert symbol.kind == SymbolKind.Module
+        assert symbol.range.start == Position(line=0, character=0)
+        assert symbol.range.end == Position(line=1, character=len(section_title))
+        assert symbol.selection_range == symbol.range

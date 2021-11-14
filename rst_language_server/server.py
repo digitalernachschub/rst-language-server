@@ -1,12 +1,13 @@
 import string
-from typing import Iterable
+from typing import Iterable, Optional
 
 from docutils.frontend import OptionParser
-from docutils.nodes import Node, SparseNodeVisitor, document, footnote
+from docutils.nodes import Node, SparseNodeVisitor, document, footnote, section
 from docutils.parsers.rst import Parser
 from docutils.utils import new_document
 from pygls.lsp.methods import (
     COMPLETION,
+    DOCUMENT_SYMBOL,
     TEXT_DOCUMENT_DID_CHANGE,
     TEXT_DOCUMENT_DID_OPEN,
 )
@@ -16,6 +17,11 @@ from pygls.lsp.types import (
     CompletionParams,
     DidChangeTextDocumentParams,
     DidOpenTextDocumentParams,
+    DocumentSymbol,
+    DocumentSymbolParams,
+    Position,
+    Range,
+    SymbolKind,
 )
 from pygls.server import LanguageServer
 
@@ -24,6 +30,7 @@ def create_server() -> LanguageServer:
     rst_language_server = LanguageServer()
     index = {
         "footnotes": [],
+        "sections": {},
     }
 
     class FootnoteVisitor(SparseNodeVisitor):
@@ -106,6 +113,41 @@ def create_server() -> LanguageServer:
                 * adornment_char,
             ),
         )
+
+    @rst_language_server.feature(DOCUMENT_SYMBOL)
+    def symbols(ls: LanguageServer, params: DocumentSymbolParams):
+        doc_id = params.text_document.uri
+        index["sections"][doc_id] = []
+        document = ls.workspace.get_document(doc_id)
+        rst = parse_rst(document.source)
+
+        class SymbolVisitor(SparseNodeVisitor):
+            def visit_section(self, node: section) -> None:
+                index["sections"][doc_id].append(node)
+
+            def unknown_visit(self, node: Node) -> None:
+                pass
+
+        rst.walk(SymbolVisitor(rst))
+        symbols = []
+        last_section: Optional[section] = None
+        for s in index["sections"][doc_id]:
+            section_first_line = last_section.line - 1 if last_section else 0
+            section_last_line = s.line - 1
+            last_line_length = len(document.lines[section_last_line])
+            section_range = Range(
+                start=Position(line=section_first_line, character=0),
+                end=Position(line=section_last_line, character=last_line_length - 1),
+            )
+            symbol = DocumentSymbol(
+                name=str(s[0][0]),
+                kind=SymbolKind.Module,
+                range=section_range,
+                selection_range=section_range,
+            )
+            symbols.append(symbol)
+            last_section = s
+        return symbols
 
     return rst_language_server
 
