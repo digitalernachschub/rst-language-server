@@ -1,5 +1,5 @@
 import string
-from typing import Iterable, Optional
+from typing import Iterable, List, Tuple
 
 from docutils.frontend import OptionParser
 from docutils.nodes import Node, SparseNodeVisitor, document, footnote, section
@@ -129,24 +129,37 @@ def create_server() -> LanguageServer:
                 pass
 
         rst.walk(SymbolVisitor(rst))
-        symbols = []
-        last_section: Optional[section] = None
+        section_lines: List[Tuple[str, int, int]] = []
+        last_section_name, last_section_start = None, None
         for s in index["sections"][doc_id]:
-            section_first_line = last_section.line - 1 if last_section else 0
-            section_last_line = s.line - 1
-            last_line_length = len(document.lines[section_last_line])
+            name = str(s[0][0])
+            start = s.line - 2
+            if section_lines:
+                # Extend length of last section until start of new section
+                section_lines[-1] = last_section_name, last_section_start, start - 1
+            section_lines.append((name, start, -1))
+            last_section_name, last_section_start, _ = section_lines[-1]
+        if section_lines:
+            # Extend length of last section to the end of the document
+            section_lines[-1] = (
+                section_lines[-1][0],
+                section_lines[-1][1],
+                len(document.lines) - 1,
+            )
+        symbols = []
+        for name, start, end in section_lines:
+            last_line_length = len(document.lines[end])
             section_range = Range(
-                start=Position(line=section_first_line, character=0),
-                end=Position(line=section_last_line, character=last_line_length - 1),
+                start=Position(line=start, character=0),
+                end=Position(line=end, character=last_line_length - 1),
             )
             symbol = DocumentSymbol(
-                name=str(s[0][0]),
+                name=name,
                 kind=SymbolKind.Module,
                 range=section_range,
                 selection_range=section_range,
             )
             symbols.append(symbol)
-            last_section = s
         return symbols
 
     return rst_language_server

@@ -307,14 +307,20 @@ def test_updates_completion_suggestions_upon_document_change(tmp_path_factory):
     assert len(response["items"]) > 0
 
 
-@given(section_title=section_title)
-def test_reports_section_title_as_module_symbol(tmp_path_factory, section_title: str):
-    text = dedent(
-        f"""\
-            {section_title}
-            {len(section_title) * "="}
-        """
-    )
+@given(section_titles=st.lists(section_title))
+def test_reports_section_titles_as_module_symbols(
+    tmp_path_factory, section_titles: str
+):
+    text = ""
+    for section_title in section_titles:
+        text += dedent(
+            f"""\
+                {section_title}
+                {len(section_title) * "="}
+                SomeText
+
+            """
+        )
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
     with _client() as client:
@@ -324,10 +330,10 @@ def test_reports_section_title_as_module_symbol(tmp_path_factory, section_title:
         response = client.symbols(file_path.as_uri()).result
 
     symbols = parse_obj_as(List[DocumentSymbol], response)
-    assert len(symbols) == 1
-    for symbol in symbols:
-        assert symbol.name == section_title
+    assert len(symbols) == len(section_titles)
+    for title_index, symbol in enumerate(symbols):
+        assert symbol.name == section_titles[title_index]
         assert symbol.kind == SymbolKind.Module
-        assert symbol.range.start == Position(line=0, character=0)
-        assert symbol.range.end == Position(line=1, character=len(section_title))
+        assert symbol.range.start == Position(line=4 * title_index, character=0)
+        assert symbol.range.end == Position(line=4 * title_index + 3, character=0)
         assert symbol.selection_range == symbol.range
