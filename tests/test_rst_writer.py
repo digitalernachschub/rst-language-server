@@ -2,35 +2,11 @@ from textwrap import dedent
 from unicodedata import east_asian_width
 
 import docutils.nodes as nodes
-import hypothesis.strategies as st
 from docutils.io import StringOutput
 from docutils.utils import new_document
+from docutils_nodes import section, text, title
 from hypothesis import given
 from rst_writer import RstWriter
-
-text = st.builds(
-    nodes.Text,
-    data=st.text(
-        st.characters(blacklist_categories=["Cc", "Cs"], blacklist_characters="|-+*`"),
-        min_size=1,
-    )
-    .map(lambda t: t.replace("\\", ""))
-    .map(lambda t: t.replace("_", ""))
-    .map(lambda t: t.strip())
-    .filter(lambda t: t)
-    .filter(lambda t: t[-1] != "."),  # e.g. "0."
-)
-
-title = st.builds(
-    nodes.title,
-    text=text,
-)
-
-section = st.builds(
-    nodes.section,
-    st.just(""),
-    title,
-)
 
 
 @given(text=text)
