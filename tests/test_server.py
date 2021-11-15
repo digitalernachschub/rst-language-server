@@ -6,13 +6,12 @@ import uuid
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, BinaryIO, List
-from unicodedata import east_asian_width
 
 import docutils.nodes
 import docutils_nodes
 import hypothesis.strategies as st
 from docutils.io import StringOutput
-from docutils.utils import new_document
+from docutils.utils import column_width, new_document
 from hypothesis import assume, given
 from pydantic import parse_obj_as
 from pygls.lsp.methods import (
@@ -218,7 +217,7 @@ def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
     assume(len(_section_title) > 1)
     adornment_char: str = data.draw(section_adornment_char)
     existing_adornment_chars: int = data.draw(
-        st.integers(min_value=1, max_value=_width(_section_title) - 1)
+        st.integers(min_value=1, max_value=column_width(_section_title) - 1)
     )
     adornment = existing_adornment_chars * adornment_char
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
@@ -236,7 +235,7 @@ def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
     assert suggestion.get("label") == 3 * adornment_char
     assert (
         suggestion.get("insertText")
-        == (_width(_section_title) - existing_adornment_chars) * adornment_char
+        == (column_width(_section_title) - existing_adornment_chars) * adornment_char
     )
 
 
@@ -247,7 +246,7 @@ def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
 def test_does_not_autocompletes_title_adornment_when_adornment_has_at_least_title_length(
     tmp_path_factory, section_title, excess_adornment_length
 ):
-    adornment = (_width(section_title) + excess_adornment_length) * "="
+    adornment = (column_width(section_title) + excess_adornment_length) * "="
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
     with _client() as client:
@@ -334,17 +333,6 @@ def test_reports_section_titles_as_module_symbols(
         assert symbol.kind == SymbolKind.Class
         assert symbol.range.start == Position(line=2 * symbol_index, character=0)
         assert symbol.range.end == Position(
-            line=2 * symbol_index + 1, character=_width(section.astext())
+            line=2 * symbol_index + 1, character=column_width(section.astext())
         )
         assert symbol.selection_range == symbol.range
-
-
-def _width(text: str) -> int:
-    character_widths = map(east_asian_width, text)
-    # docutils considers wide ("W") and full-width ("F") chars as occupying two columns
-    # All other character width classes are counted as one column
-    # see https://sourceforge.net/p/docutils/code/HEAD/tree/tags/docutils-0.18/docutils/utils/__init__.py#l628
-    numeric_widths = map(
-        lambda width: 2 if width in ("W", "F") else 1, character_widths
-    )
-    return sum(numeric_widths)

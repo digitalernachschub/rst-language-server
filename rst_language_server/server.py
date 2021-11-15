@@ -1,11 +1,10 @@
 import string
 from typing import Iterable, List, Tuple
-from unicodedata import east_asian_width
 
 from docutils.frontend import OptionParser
 from docutils.nodes import Node, SparseNodeVisitor, document, footnote, section
 from docutils.parsers.rst import Parser
-from docutils.utils import new_document
+from docutils.utils import column_width, new_document
 from pygls.lsp.methods import (
     COMPLETION,
     DOCUMENT_SYMBOL,
@@ -104,7 +103,7 @@ def create_server() -> LanguageServer:
         )
         if not consists_of_one_char:
             return ()
-        title_width = _width(lines[previous_line_index])
+        title_width = column_width(lines[previous_line_index])
         if current_line_length >= title_width:
             return ()
         return (
@@ -163,17 +162,6 @@ def create_server() -> LanguageServer:
         return symbols
 
     return rst_language_server
-
-
-def _width(text: str) -> int:
-    character_widths = map(east_asian_width, text)
-    # docutils considers wide ("W") and full-width ("F") chars as occupying two columns
-    # All other character width classes are counted as one column
-    # see https://sourceforge.net/p/docutils/code/HEAD/tree/tags/docutils-0.18/docutils/utils/__init__.py#l628
-    numeric_widths = map(
-        lambda width: 2 if width in ("W", "F") else 1, character_widths
-    )
-    return sum(numeric_widths)
 
 
 def parse_rst(text: str) -> document:
