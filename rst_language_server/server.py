@@ -155,7 +155,7 @@ def create_server() -> LanguageServer:
             )
             symbol = DocumentSymbol(
                 name=name,
-                kind=SymbolKind.Module,
+                kind=SymbolKind.Class,
                 range=section_range,
                 selection_range=section_range,
             )
