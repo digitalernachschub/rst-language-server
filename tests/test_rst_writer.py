@@ -18,6 +18,11 @@ text = st.builds(
     .filter(lambda t: t[-1] != "."),  # e.g. "0."
 )
 
+title = st.builds(
+    nodes.title,
+    text=text,
+)
+
 
 @given(text=text)
 def test_serializes_text(text: nodes.Text):
@@ -29,3 +34,15 @@ def test_serializes_text(text: nodes.Text):
     writer.write(document, output)
 
     assert output.destination == text.astext()
+
+
+@given(title=title)
+def test_serializes_title(title: nodes.title):
+    writer = RstWriter()
+    output = StringOutput(encoding="unicode")
+    document = new_document("testDoc")
+    document.append(title)
+
+    writer.write(document, output)
+
+    assert output.destination == title.astext()
