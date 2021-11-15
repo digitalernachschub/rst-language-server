@@ -43,6 +43,18 @@ from pygls.server import LanguageServer, StdOutTransportAdapter, deserialize_mes
 
 from rst_language_server import create_server
 
+text = (
+    st.text(
+        st.characters(blacklist_categories=["Cc", "Cs"], blacklist_characters="|-+*`"),
+        min_size=1,
+    )
+    .map(lambda t: t.replace("\\", ""))
+    .map(lambda t: t.replace("_", ""))
+    .map(lambda t: t.strip())
+    .filter(lambda t: t)
+    .filter(lambda t: t[-1] != ".")  # e.g. "0."
+)
+
 # docutils matches auto-numbered footnote labels against the following regex
 # see https://sourceforge.net/p/docutils/code/HEAD/tree/tags/docutils-0.18/docutils/parsers/rst/states.py#l2322
 # see https://sourceforge.net/p/docutils/code/HEAD/tree/tags/docutils-0.18/docutils/parsers/rst/states.py#l673
@@ -56,19 +68,9 @@ simplename = st.text(
 footnote_label = st.integers(min_value=0).map(str) | simplename.map(
     lambda label: f"#{label}"
 )
-footnote_content = (
-    st.text(
-        st.characters(blacklist_categories=["Cc", "Cs"], blacklist_characters="|-+*`"),
-        min_size=1,
-    )
-    .map(lambda text: text.replace("\\", ""))
-    .map(lambda text: text.replace("_", ""))
-    .map(lambda text: text.strip())
-    .filter(lambda text: text)
-    .filter(lambda text: text[-1] != ".")  # e.g. "0."
-)
+footnote_content = text
 
-section_title = footnote_content
+section_title = text
 # https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#footnote-reference-6
 section_adornment_char = st.sampled_from(string.punctuation)
 
