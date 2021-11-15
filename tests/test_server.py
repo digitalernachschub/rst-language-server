@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from textwrap import dedent
 from typing import Any, BinaryIO, List
+from unicodedata import east_asian_width
 
 import hypothesis.strategies as st
 from hypothesis import assume, given
@@ -57,24 +58,17 @@ footnote_label = st.integers(min_value=0).map(str) | simplename.map(
 )
 footnote_content = (
     st.text(
-        st.characters(blacklist_categories=["Cc", "Cs"], blacklist_characters="|"),
+        st.characters(blacklist_categories=["Cc", "Cs"], blacklist_characters="|-+*`"),
         min_size=1,
     )
     .map(lambda text: text.replace("\\", ""))
     .map(lambda text: text.replace("_", ""))
     .map(lambda text: text.strip())
     .filter(lambda text: text)
-    .filter(lambda text: text not in "-+*")
     .filter(lambda text: text[-1] != ".")  # e.g. "0."
 )
 
-# Valid character set for section headers is unclear
-# See bug https://sourceforge.net/p/docutils/bugs/433/
-# Using regular alphanumeric characters until this is clarified
-section_title = st.text(
-    string.ascii_letters + string.digits,
-    min_size=1,
-)
+section_title = footnote_content
 # https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#footnote-reference-6
 section_adornment_char = st.sampled_from(string.punctuation)
 
@@ -218,7 +212,7 @@ def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
     assume(len(_section_title) > 1)
     adornment_char: str = data.draw(section_adornment_char)
     existing_adornment_chars: int = data.draw(
-        st.integers(min_value=1, max_value=len(_section_title) - 1)
+        st.integers(min_value=1, max_value=_width(_section_title) - 1)
     )
     adornment = existing_adornment_chars * adornment_char
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
@@ -236,7 +230,7 @@ def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
     assert suggestion.get("label") == 3 * adornment_char
     assert (
         suggestion.get("insertText")
-        == (len(_section_title) - existing_adornment_chars) * adornment_char
+        == (_width(_section_title) - existing_adornment_chars) * adornment_char
     )
 
 
@@ -247,7 +241,7 @@ def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
 def test_does_not_autocompletes_title_adornment_when_adornment_has_at_least_title_length(
     tmp_path_factory, section_title, excess_adornment_length
 ):
-    adornment = (len(section_title) + excess_adornment_length) * "="
+    adornment = (_width(section_title) + excess_adornment_length) * "="
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
     with _client() as client:
@@ -316,7 +310,7 @@ def test_reports_section_titles_as_module_symbols(
         text += dedent(
             f"""\
                 {section_title}
-                {len(section_title) * "="}
+                {_width(section_title) * "="}
                 SomeText
 
             """
@@ -337,3 +331,14 @@ def test_reports_section_titles_as_module_symbols(
         assert symbol.range.start == Position(line=4 * title_index, character=0)
         assert symbol.range.end == Position(line=4 * title_index + 3, character=0)
         assert symbol.selection_range == symbol.range
+
+
+def _width(text: str) -> int:
+    character_widths = map(east_asian_width, text)
+    # docutils considers wide ("W") and full-width ("F") chars as occupying two columns
+    # All other character width classes are counted as one column
+    # see https://sourceforge.net/p/docutils/code/HEAD/tree/tags/docutils-0.18/docutils/utils/__init__.py#l628
+    numeric_widths = map(
+        lambda width: 2 if width in ("W", "F") else 1, character_widths
+    )
+    return sum(numeric_widths)
