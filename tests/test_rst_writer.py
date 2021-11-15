@@ -3,7 +3,7 @@ from textwrap import dedent
 import docutils.nodes as nodes
 from docutils.io import StringOutput
 from docutils.utils import column_width, new_document
-from docutils_nodes import section, text, title
+from docutils_nodes import section, text, titles
 from hypothesis import given
 from rst_writer import RstWriter
 
@@ -20,7 +20,7 @@ def test_serializes_text(text: nodes.Text):
     assert output.destination == text.astext()
 
 
-@given(title=title)
+@given(title=titles)
 def test_serializes_title(title: nodes.title):
     writer = RstWriter()
     output = StringOutput(encoding="unicode")

@@ -14,7 +14,7 @@ text = st.builds(
     .filter(lambda t: t[-1] != "."),  # e.g. "0."
 )
 
-title = st.builds(
+titles = st.builds(
     nodes.title,
     text=text,
 )
@@ -22,5 +22,5 @@ title = st.builds(
 section = st.builds(
     nodes.section,
     st.just(""),
-    title,
+    titles,
 )
