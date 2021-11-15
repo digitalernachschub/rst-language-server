@@ -32,7 +32,7 @@ def test_serializes_title(title: nodes.title):
     assert output.destination == title.astext()
 
 
-@given(section=section)
+@given(section=section())
 def test_serializes_section(section: nodes.section):
     writer = RstWriter()
     output = StringOutput(encoding="unicode")

@@ -19,8 +19,15 @@ titles = st.builds(
     text=text,
 )
 
-section = st.builds(
-    nodes.section,
-    st.just(""),
-    titles,
-)
+
+@st.composite
+def section(
+    draw, title: st.SearchStrategy[nodes.title] = None
+) -> st.SearchStrategy[nodes.section]:
+    return draw(
+        st.builds(
+            nodes.section,
+            st.just(""),
+            title or titles,
+        )
+    )
