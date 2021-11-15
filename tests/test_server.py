@@ -5,11 +5,14 @@ import string
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
-from textwrap import dedent
 from typing import Any, BinaryIO, List
 from unicodedata import east_asian_width
 
+import docutils.nodes
+import docutils_nodes
 import hypothesis.strategies as st
+from docutils.io import StringOutput
+from docutils.utils import new_document
 from hypothesis import assume, given
 from pydantic import parse_obj_as
 from pygls.lsp.methods import (
@@ -40,6 +43,7 @@ from pygls.protocol import (
     JsonRPCResponseMessage,
 )
 from pygls.server import LanguageServer, StdOutTransportAdapter, deserialize_message
+from rst_writer import RstWriter
 
 from rst_language_server import create_server
 
@@ -303,20 +307,17 @@ def test_updates_completion_suggestions_upon_document_change(tmp_path_factory):
     assert len(response["items"]) > 0
 
 
-@given(section_titles=st.lists(title))
+@given(sections=st.lists(docutils_nodes.section))
 def test_reports_section_titles_as_module_symbols(
-    tmp_path_factory, section_titles: str
+    tmp_path_factory, sections: List[docutils.nodes.section]
 ):
-    text = ""
-    for section_title in section_titles:
-        text += dedent(
-            f"""\
-                {section_title}
-                {_width(section_title) * "="}
-                SomeText
-
-            """
-        )
+    document = new_document("testDoc")
+    for section in sections:
+        document.append(section)
+    rst_writer = RstWriter()
+    output = StringOutput(encoding="unicode")
+    rst_writer.write(document, output)
+    text = output.destination
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
     with _client() as client:
@@ -326,12 +327,15 @@ def test_reports_section_titles_as_module_symbols(
         response = client.symbols(file_path.as_uri()).result
 
     symbols = parse_obj_as(List[DocumentSymbol], response)
-    assert len(symbols) == len(section_titles)
-    for title_index, symbol in enumerate(symbols):
-        assert symbol.name == section_titles[title_index]
+    assert len(symbols) == len(sections)
+    for symbol_index, symbol in enumerate(symbols):
+        section = sections[symbol_index]
+        assert symbol.name == section.astext()
         assert symbol.kind == SymbolKind.Class
-        assert symbol.range.start == Position(line=4 * title_index, character=0)
-        assert symbol.range.end == Position(line=4 * title_index + 3, character=0)
+        assert symbol.range.start == Position(line=2 * symbol_index, character=0)
+        assert symbol.range.end == Position(
+            line=2 * symbol_index + 1, character=_width(section.astext())
+        )
         assert symbol.selection_range == symbol.range
 
 
