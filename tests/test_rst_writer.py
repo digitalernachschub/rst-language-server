@@ -3,7 +3,7 @@ from textwrap import dedent
 import docutils.nodes as nodes
 from docutils.io import StringOutput
 from docutils.utils import column_width, new_document
-from docutils_nodes import sections, text, titles
+from docutils_nodes import emphases, sections, text, titles
 from hypothesis import given
 from rst_writer import RstWriter
 
@@ -18,6 +18,18 @@ def test_serializes_text(text: nodes.Text):
     writer.write(document, output)
 
     assert output.destination == text.astext()
+
+
+@given(emphasis=emphases())
+def test_serializes_emphasis(emphasis: nodes.emphasis):
+    writer = RstWriter()
+    output = StringOutput(encoding="unicode")
+    document = new_document("testDoc")
+    document.append(emphasis)
+
+    writer.write(document, output)
+
+    assert output.destination == f"*{emphasis.astext()}*"
 
 
 @given(title=titles)

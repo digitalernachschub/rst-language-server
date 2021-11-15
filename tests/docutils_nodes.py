@@ -14,6 +14,17 @@ text = st.builds(
     .filter(lambda t: t[-1] != "."),  # e.g. "0."
 )
 
+
+@st.composite
+def emphases(draw) -> st.SearchStrategy[nodes.emphasis]:
+    return draw(
+        st.builds(
+            nodes.emphasis,
+            text=text,
+        )
+    )
+
+
 titles = st.builds(
     nodes.title,
     text=text,

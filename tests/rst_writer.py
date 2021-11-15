@@ -1,4 +1,4 @@
-from docutils.nodes import Node, SparseNodeVisitor, Text, document, title
+from docutils.nodes import Node, SparseNodeVisitor, Text, document, emphasis, title
 from docutils.utils import column_width
 from docutils.writers import Writer
 
@@ -17,6 +17,12 @@ class _SerializationVisitor(SparseNodeVisitor):
 
     def visit_Text(self, node: Text) -> None:
         self.text += node.astext()
+
+    def visit_emphasis(self, node: emphasis) -> None:
+        self.text += "*"
+
+    def depart_emphasis(self, node: emphasis) -> None:
+        self.text += "*"
 
     def depart_section(self, node: title) -> None:
         self.text += f"\n{column_width(node.astext()) * '='}\n"
