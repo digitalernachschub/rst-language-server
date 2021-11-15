@@ -70,7 +70,7 @@ footnote_label = st.integers(min_value=0).map(str) | simplename.map(
 )
 footnote_content = text
 
-section_title = text
+title = text
 # https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#footnote-reference-6
 section_adornment_char = st.sampled_from(string.punctuation)
 
@@ -209,7 +209,7 @@ def test_autocompletes_footnote_labels(
 def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
     tmp_path_factory, data
 ):
-    _section_title: str = data.draw(section_title)
+    _section_title: str = data.draw(title)
     # No autocompletion when adornment has reached title length
     assume(len(_section_title) > 1)
     adornment_char: str = data.draw(section_adornment_char)
@@ -237,7 +237,7 @@ def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
 
 
 @given(
-    section_title=section_title,
+    section_title=title,
     excess_adornment_length=st.integers(min_value=0, max_value=3),
 )
 def test_does_not_autocompletes_title_adornment_when_adornment_has_at_least_title_length(
@@ -303,7 +303,7 @@ def test_updates_completion_suggestions_upon_document_change(tmp_path_factory):
     assert len(response["items"]) > 0
 
 
-@given(section_titles=st.lists(section_title))
+@given(section_titles=st.lists(title))
 def test_reports_section_titles_as_module_symbols(
     tmp_path_factory, section_titles: str
 ):
