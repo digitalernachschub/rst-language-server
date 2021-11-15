@@ -47,7 +47,7 @@ def test_serializes_section(section: nodes.section):
             {section[0].astext()}
             {_width(section[0].astext()) * "="}
         """
-    ).strip()
+    )
     assert output.destination == expected_rst
 
 

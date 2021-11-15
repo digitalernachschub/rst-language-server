@@ -20,7 +20,7 @@ class _SerializationVisitor(SparseNodeVisitor):
         self.text += node.astext()
 
     def depart_section(self, node: title) -> None:
-        self.text += f"\n{_width(node.astext()) * '='}"
+        self.text += f"\n{_width(node.astext()) * '='}\n"
 
     def unknown_visit(self, node: Node) -> None:
         pass
