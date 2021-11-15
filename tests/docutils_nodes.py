@@ -21,7 +21,7 @@ titles = st.builds(
 
 
 @st.composite
-def section(
+def sections(
     draw, title: st.SearchStrategy[nodes.title] = None
 ) -> st.SearchStrategy[nodes.section]:
     return draw(
