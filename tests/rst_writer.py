@@ -1,3 +1,4 @@
+import string
 from typing import Iterable
 
 from docutils.nodes import (
@@ -19,7 +20,8 @@ class RstWriter(Writer):
         self.section_adornment_characters = (
             list(section_adornment_characters)
             if section_adornment_characters
-            else list("=-`:.'\"~^_*+#")
+            # https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#footnote-reference-6
+            else list(string.punctuation)
         )
 
     def translate(self):
