@@ -248,21 +248,30 @@ def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
 
 
 @given(
-    section_title=title,
+    section=docutils_nodes.sections(),
     excess_adornment_length=st.integers(min_value=0, max_value=3),
 )
 def test_does_not_autocompletes_title_adornment_when_adornment_has_at_least_title_length(
-    tmp_path_factory, section_title, excess_adornment_length
+    tmp_path_factory, section, excess_adornment_length
 ):
-    adornment = (column_width(section_title) + excess_adornment_length) * "="
+    document = new_document("testDoc")
+    document.append(section)
+    rst_writer = RstWriter()
+    output = StringOutput(encoding="unicode")
+    rst_writer.write(document, output)
+    rst_text = output.destination
+    title_line, adornment_line = rst_text.splitlines()
+    adornment_line += (
+        excess_adornment_length * rst_writer.section_adornment_characters[0]
+    )
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
     with _client() as client:
         client.initialize(server_root.as_uri())
-        client.open(uri=file_path.as_uri(), text=f"{section_title}\n{adornment}")
+        client.open(uri=file_path.as_uri(), text=f"{title_line}\n{adornment_line}")
 
         response = client.complete(
-            file_path.as_uri(), line=1, character=len(adornment)
+            file_path.as_uri(), line=1, character=len(adornment_line)
         ).result
 
     assert len(response["items"]) == 0
