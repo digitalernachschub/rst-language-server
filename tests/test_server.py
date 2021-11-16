@@ -1,6 +1,5 @@
 import json
 import os
-import re
 import string
 import uuid
 from contextlib import contextmanager
@@ -58,19 +57,6 @@ text = (
     .filter(lambda t: t[-1] != ".")  # e.g. "0."
 )
 
-# docutils matches auto-numbered footnote labels against the following regex
-# see https://sourceforge.net/p/docutils/code/HEAD/tree/tags/docutils-0.18/docutils/parsers/rst/states.py#l2322
-# see https://sourceforge.net/p/docutils/code/HEAD/tree/tags/docutils-0.18/docutils/parsers/rst/states.py#l673
-# \w matches a unicode word character. The corresponding Unicode classes were
-# taken from this post: https://stackoverflow.com/a/2998550
-simplename_pattern = re.compile(r"(?:(?!_)\w)+(?:[-._+:](?:(?!_)\w)+)*", re.UNICODE)
-simplename = st.text(
-    st.characters(whitelist_categories=["Lu", "Ll", "Lt", "Lm", "Lo", "Nd", "Pc"]),
-    min_size=1,
-).filter(lambda s: simplename_pattern.fullmatch(s))
-footnote_label = st.integers(min_value=0).map(str) | simplename.map(
-    lambda label: f"#{label}"
-)
 footnote_content = text
 
 
@@ -180,27 +166,30 @@ class LspClient:
         return response
 
 
-@given(footnote_label=footnote_label, footnote_content=footnote_content)
+@given(
+    footnote_label=docutils_nodes.footnote_labels(), footnote_content=footnote_content
+)
 def test_autocompletes_footnote_labels(
-    tmp_path_factory, footnote_label: str, footnote_content: str
+    tmp_path_factory, footnote_label: docutils.nodes.label, footnote_content: str
 ):
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
     with _client() as client:
         client.initialize(server_root.as_uri())
         client.open(
-            uri=file_path.as_uri(), text=f".. [{footnote_label}] {footnote_content}\n"
+            uri=file_path.as_uri(),
+            text=f".. [{footnote_label.astext()}] {footnote_content}\n",
         )
 
         response = client.complete(file_path.as_uri(), line=1, character=0).result
 
     assert len(response["items"]) > 0
     suggestion = response["items"][0]
-    assert suggestion.get("label") == footnote_label.lower(), (
+    assert suggestion.get("label") == footnote_label.astext().lower(), (
         f"No autocomplete suggestion for {footnote_label}. "
         f"Available suggestions {', '.join((repr(d) for d in response['items']))}"
     )
-    assert suggestion.get("insertText") == f"{footnote_label.lower()}]_"
+    assert suggestion.get("insertText") == f"{footnote_label.astext().lower()}]_"
     assert suggestion.get("detail") == footnote_content
 
 
