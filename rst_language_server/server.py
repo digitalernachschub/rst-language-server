@@ -131,7 +131,7 @@ def create_server() -> LanguageServer:
         section_lines: List[Tuple[str, int, int]] = []
         last_section_name, last_section_start = None, None
         for s in index["sections"][doc_id]:
-            name = str(s[0][0])
+            name = s[0].astext()
             start = s.line - 2
             if section_lines:
                 # Extend length of last section until start of new section

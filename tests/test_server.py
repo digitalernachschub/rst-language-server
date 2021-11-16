@@ -333,6 +333,7 @@ def test_reports_section_titles_as_module_symbols(
         assert symbol.kind == SymbolKind.Class
         assert symbol.range.start == Position(line=2 * symbol_index, character=0)
         assert symbol.range.end == Position(
-            line=2 * symbol_index + 1, character=column_width(section.astext())
+            line=2 * symbol_index + 1,
+            character=column_width(text.splitlines()[2 * symbol_index + 1]),
         )
         assert symbol.selection_range == symbol.range

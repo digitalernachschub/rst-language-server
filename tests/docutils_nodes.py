@@ -30,7 +30,8 @@ def emphases(draw) -> st.SearchStrategy[nodes.emphasis]:
 
 titles = st.builds(
     nodes.title,
-    text=text,
+    st.just(""),
+    text.map(nodes.Text) | emphases(),
 )
 
 
