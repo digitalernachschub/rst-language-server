@@ -29,6 +29,16 @@ def emphases(draw) -> st.SearchStrategy[nodes.emphasis]:
 
 
 @st.composite
+def strongs(draw) -> st.SearchStrategy[nodes.emphasis]:
+    return draw(
+        st.builds(
+            nodes.strong,
+            text=text,
+        )
+    )
+
+
+@st.composite
 def inlines(draw) -> st.SearchStrategy[nodes.inline]:
     return draw(st.one_of(emphases()))
 
