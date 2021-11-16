@@ -13,6 +13,7 @@ docutils = "^0.18"
 [tool.poetry.dev-dependencies]
 pytest = "^6.2"
 hypothesis = "^6.24.2"
+pytest-cov = "^3.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -21,3 +22,6 @@ build-backend = "poetry.core.masonry.api"
 [tool.isort]
 profile = "black"
 multi_line_output = 3
+
+[tool.pytest.ini_options]
+addopts = "--cov=rst_language_server"
