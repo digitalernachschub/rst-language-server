@@ -212,19 +212,27 @@ def test_autocompletes_footnote_labels(
 def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
     tmp_path_factory, data
 ):
-    _section_title: str = data.draw(title)
+    section: docutils.nodes.section = data.draw(docutils_nodes.sections())
+    title: docutils.nodes.title = section[0]
     # No autocompletion when adornment has reached title length
-    assume(len(_section_title) > 1)
+    assume(len(title.astext()) > 1)
+    document = new_document("testDoc")
+    document.append(section)
     adornment_char: str = data.draw(section_adornment_char)
+    rst_writer = RstWriter(section_adornment_characters=[adornment_char])
+    output = StringOutput(encoding="unicode")
+    rst_writer.write(document, output)
+    rst_text = output.destination
     existing_adornment_chars: int = data.draw(
-        st.integers(min_value=1, max_value=column_width(_section_title) - 1)
+        st.integers(min_value=1, max_value=column_width(title.astext()) - 1)
     )
-    adornment = existing_adornment_chars * adornment_char
+    title_line, adornment_line = rst_text.splitlines()
+    adornment_line = adornment_line[0:existing_adornment_chars]
     server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
     file_path: Path = server_root / f"test_file.rst"
     with _client() as client:
         client.initialize(server_root.as_uri())
-        client.open(uri=file_path.as_uri(), text=f"{_section_title}\n{adornment}")
+        client.open(uri=file_path.as_uri(), text=f"{title_line}\n{adornment_line}\n")
 
         response = client.complete(
             file_path.as_uri(), line=1, character=existing_adornment_chars
@@ -235,7 +243,7 @@ def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
     assert suggestion.get("label") == 3 * adornment_char
     assert (
         suggestion.get("insertText")
-        == (column_width(_section_title) - existing_adornment_chars) * adornment_char
+        == (column_width(title_line) - existing_adornment_chars) * adornment_char
     )
 
 
