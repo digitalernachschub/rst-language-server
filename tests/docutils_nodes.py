@@ -28,10 +28,15 @@ def emphases(draw) -> st.SearchStrategy[nodes.emphasis]:
     )
 
 
+@st.composite
+def inlines(draw) -> st.SearchStrategy[nodes.inline]:
+    return draw(st.one_of(emphases()))
+
+
 titles = st.builds(
     nodes.title,
     st.just(""),
-    text.map(nodes.Text) | emphases(),
+    text.map(nodes.Text) | inlines(),
 )
 
 
