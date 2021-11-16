@@ -1,3 +1,5 @@
+from unicodedata import combining
+
 import docutils.nodes as nodes
 import hypothesis.strategies as st
 
@@ -11,7 +13,8 @@ text = st.builds(
     .map(lambda t: t.replace("_", ""))
     .map(lambda t: t.strip())
     .filter(lambda t: t)
-    .filter(lambda t: t[-1] != "."),  # e.g. "0."
+    .filter(lambda t: t[-1] != ".")  # e.g. "0."
+    .filter(lambda t: combining(t[0]) == 0),
 )
 
 
