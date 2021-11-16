@@ -40,10 +40,10 @@ from pygls.protocol import (
     JsonRPCResponseMessage,
 )
 from pygls.server import LanguageServer, StdOutTransportAdapter, deserialize_message
-from rst_writer import RstWriter
 
 import hypothesis_docutils as du
 from rst_language_server import create_server
+from tests.rst_writer import RstWriter
 
 text = (
     st.text(
