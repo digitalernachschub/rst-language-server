@@ -73,9 +73,6 @@ footnote_label = st.integers(min_value=0).map(str) | simplename.map(
 )
 footnote_content = text
 
-# https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#footnote-reference-6
-section_adornment_char = st.sampled_from(string.punctuation)
-
 
 @contextmanager
 def _client() -> "LspClient":
@@ -217,8 +214,9 @@ def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
     assume(len(title.astext()) > 1)
     document = new_document("testDoc")
     document.append(section)
-    adornment_char: str = data.draw(section_adornment_char)
-    rst_writer = RstWriter(section_adornment_characters=[adornment_char])
+    rst_writer = RstWriter()
+    adornment_char = data.draw(st.sampled_from(rst_writer.section_adornment_characters))
+    rst_writer.section_adornment_characters = [adornment_char]
     output = StringOutput(encoding="unicode")
     rst_writer.write(document, output)
     rst_text = output.destination
