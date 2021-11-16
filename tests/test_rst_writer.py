@@ -44,7 +44,7 @@ def test_serializes_strong(strong: nodes.strong):
     assert output.destination == f"**{strong.astext()}**"
 
 
-@given(title=titles)
+@given(title=titles())
 def test_serializes_title(title: nodes.title):
     writer = RstWriter()
     output = StringOutput(encoding="unicode")

@@ -43,11 +43,15 @@ def inlines(draw) -> st.SearchStrategy[nodes.inline]:
     return draw(st.one_of(emphases(), strongs()))
 
 
-titles = st.builds(
-    nodes.title,
-    st.just(""),
-    text.map(nodes.Text) | inlines(),
-)
+@st.composite
+def titles(draw) -> st.SearchStrategy[nodes.title]:
+    return draw(
+        st.builds(
+            nodes.title,
+            st.just(""),
+            text.map(nodes.Text) | inlines(),
+        )
+    )
 
 
 @st.composite
@@ -58,6 +62,6 @@ def sections(
         st.builds(
             nodes.section,
             st.just(""),
-            title or titles,
+            title or titles(),
         )
     )
