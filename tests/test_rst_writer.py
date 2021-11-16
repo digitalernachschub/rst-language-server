@@ -1,11 +1,16 @@
+import string
 from textwrap import dedent
 
 import docutils.nodes as nodes
+import hypothesis.strategies as st
 from docutils.io import StringOutput
 from docutils.utils import column_width, new_document
 from docutils_nodes import emphases, sections, strongs, text, titles
 from hypothesis import given
 from rst_writer import RstWriter
+
+# https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#footnote-reference-6
+section_adornment_char = st.sampled_from(string.punctuation)
 
 
 @given(text=text)
@@ -56,9 +61,9 @@ def test_serializes_title(title: nodes.title):
     assert output.destination == title.astext()
 
 
-@given(section=sections())
-def test_serializes_section(section: nodes.section):
-    writer = RstWriter()
+@given(section=sections(), adornment_char=section_adornment_char)
+def test_serializes_section(section: nodes.section, adornment_char: str):
+    writer = RstWriter(section_adornment_characters=[adornment_char])
     output = StringOutput(encoding="unicode")
     document = new_document("testDoc")
     document.append(section)
@@ -68,7 +73,7 @@ def test_serializes_section(section: nodes.section):
     expected_rst = dedent(
         f"""\
             {section[0].astext()}
-            {column_width(section[0].astext()) * "="}
+            {column_width(section[0].astext()) * adornment_char}
         """
     )
     assert output.destination == expected_rst

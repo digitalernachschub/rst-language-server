@@ -1,27 +1,41 @@
+from typing import Iterable
+
 from docutils.nodes import (
     Node,
     SparseNodeVisitor,
     Text,
     document,
     emphasis,
+    section,
     strong,
-    title,
 )
 from docutils.utils import column_width
 from docutils.writers import Writer
 
 
 class RstWriter(Writer):
+    def __init__(self, section_adornment_characters: Iterable[str] = None):
+        super().__init__()
+        self.section_adornment_characters = (
+            list(section_adornment_characters)
+            if section_adornment_characters
+            else list("=-`:.'\"~^_*+#")
+        )
+
     def translate(self):
-        serializer = _SerializationVisitor(self.document)
+        serializer = _SerializationVisitor(
+            self.document, self.section_adornment_characters
+        )
         self.document.walkabout(serializer)
         self.output = serializer.text
 
 
 class _SerializationVisitor(SparseNodeVisitor):
-    def __init__(self, doc: document):
+    def __init__(self, doc: document, section_adornment_characters: Iterable[str]):
         super().__init__(doc)
+        self._section_level = -1
         self.text = ""
+        self.section_adornment_characters = list(section_adornment_characters)
 
     def visit_Text(self, node: Text) -> None:
         self.text += node.astext()
@@ -38,8 +52,14 @@ class _SerializationVisitor(SparseNodeVisitor):
     def depart_strong(self, node: strong) -> None:
         self.text += "**"
 
-    def depart_section(self, node: title) -> None:
-        self.text += f"\n{column_width(self.text.splitlines()[-1]) * '='}\n"
+    def visit_section(self, node: section) -> None:
+        self._section_level += 1
+
+    def depart_section(self, node: section) -> None:
+        adornment_char = self.section_adornment_characters[self._section_level]
+        adornment = column_width(self.text.splitlines()[-1]) * adornment_char
+        self.text += f"\n{adornment}\n"
+        self._section_level -= 1
 
     def unknown_visit(self, node: Node) -> None:
         pass
