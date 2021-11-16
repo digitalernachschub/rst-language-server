@@ -5,7 +5,7 @@ import docutils.nodes as nodes
 import hypothesis.strategies as st
 from docutils.io import StringOutput
 from docutils.utils import column_width, new_document
-from docutils_nodes import emphases, sections, strongs, text, titles
+from docutils_nodes import emphases, footnote_labels, sections, strongs, text, titles
 from hypothesis import given
 from rst_writer import RstWriter
 
@@ -23,6 +23,18 @@ def test_serializes_text(text: nodes.Text):
     writer.write(document, output)
 
     assert output.destination == text.astext()
+
+
+@given(label=footnote_labels())
+def test_serializes_label(label: nodes.label):
+    writer = RstWriter()
+    output = StringOutput(encoding="unicode")
+    document = new_document("testDoc")
+    document.append(label)
+
+    writer.write(document, output)
+
+    assert output.destination == label.astext()
 
 
 @given(emphasis=emphases())

@@ -1,3 +1,4 @@
+import re
 from unicodedata import combining
 
 import docutils.nodes as nodes
@@ -34,6 +35,33 @@ def strongs(draw) -> st.SearchStrategy[nodes.emphasis]:
         st.builds(
             nodes.strong,
             text=text,
+        )
+    )
+
+
+# docutils matches auto-numbered footnote labels against the following regex
+# see https://sourceforge.net/p/docutils/code/HEAD/tree/tags/docutils-0.18/docutils/parsers/rst/states.py#l2322
+# see https://sourceforge.net/p/docutils/code/HEAD/tree/tags/docutils-0.18/docutils/parsers/rst/states.py#l673
+# \w matches a unicode word character. The corresponding Unicode classes were
+# taken from this post: https://stackoverflow.com/a/2998550
+simplename = st.text(
+    st.characters(whitelist_categories=["Lu", "Ll", "Lt", "Lm", "Lo", "Nd", "Pc"]),
+    min_size=1,
+).filter(lambda s: _simplename_pattern.fullmatch(s))
+_simplename_pattern = re.compile(r"(?:(?!_)\w)+(?:[-._+:](?:(?!_)\w)+)*", re.UNICODE)
+
+
+@st.composite
+def footnote_labels(draw) -> st.SearchStrategy[nodes.label]:
+    numbered_footnote_label = st.integers(min_value=0).map(str).map(nodes.Text)
+    autonumbered_labelled_footnote_label = simplename.map(
+        lambda label: f"#{label}"
+    ).map(nodes.Text)
+    return draw(
+        st.builds(
+            nodes.label,
+            st.just(""),
+            numbered_footnote_label | autonumbered_labelled_footnote_label,
         )
     )
 
