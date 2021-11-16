@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Any, BinaryIO, List
 
 import docutils.nodes
-import docutils_nodes
 import hypothesis.strategies as st
 from docutils.io import StringOutput
 from docutils.utils import column_width, new_document
@@ -43,6 +42,7 @@ from pygls.protocol import (
 from pygls.server import LanguageServer, StdOutTransportAdapter, deserialize_message
 from rst_writer import RstWriter
 
+import hypothesis_docutils as du
 from rst_language_server import create_server
 
 text = (
@@ -166,9 +166,7 @@ class LspClient:
         return response
 
 
-@given(
-    footnote_label=docutils_nodes.footnote_labels(), footnote_content=footnote_content
-)
+@given(footnote_label=du.footnote_labels(), footnote_content=footnote_content)
 def test_autocompletes_footnote_labels(
     tmp_path_factory, footnote_label: docutils.nodes.label, footnote_content: str
 ):
@@ -197,7 +195,7 @@ def test_autocompletes_footnote_labels(
 def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
     tmp_path_factory, data
 ):
-    section: docutils.nodes.section = data.draw(docutils_nodes.sections())
+    section: docutils.nodes.section = data.draw(du.sections())
     title: docutils.nodes.title = section[0]
     # No autocompletion when adornment has reached title length
     assume(len(title.astext()) > 1)
@@ -234,7 +232,7 @@ def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
 
 
 @given(
-    section=docutils_nodes.sections(),
+    section=du.sections(),
     excess_adornment_length=st.integers(min_value=0, max_value=3),
 )
 def test_does_not_autocompletes_title_adornment_when_adornment_has_at_least_title_length(
@@ -309,7 +307,7 @@ def test_updates_completion_suggestions_upon_document_change(tmp_path_factory):
     assert len(response["items"]) > 0
 
 
-@given(sections=st.lists(docutils_nodes.sections()))
+@given(sections=st.lists(du.sections()))
 def test_reports_section_titles_as_module_symbols(
     tmp_path_factory, sections: List[docutils.nodes.section]
 ):

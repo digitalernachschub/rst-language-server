@@ -5,9 +5,17 @@ import docutils.nodes as nodes
 import hypothesis.strategies as st
 from docutils.io import StringOutput
 from docutils.utils import column_width, new_document
-from docutils_nodes import emphases, footnote_labels, sections, strongs, text, titles
 from hypothesis import given
 from rst_writer import RstWriter
+
+from hypothesis_docutils import (
+    emphases,
+    footnote_labels,
+    sections,
+    strongs,
+    text,
+    titles,
+)
 
 # https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#footnote-reference-6
 section_adornment_char = st.sampled_from(string.punctuation)
