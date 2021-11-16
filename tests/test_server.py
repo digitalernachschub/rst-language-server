@@ -73,7 +73,6 @@ footnote_label = st.integers(min_value=0).map(str) | simplename.map(
 )
 footnote_content = text
 
-title = text
 # https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#footnote-reference-6
 section_adornment_char = st.sampled_from(string.punctuation)
 
