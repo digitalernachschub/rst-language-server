@@ -11,6 +11,7 @@ from hypothesis_doctree import (
     documents,
     emphases,
     footnote_labels,
+    paragraphs,
     sections,
     strongs,
     text,
@@ -75,6 +76,17 @@ def test_serializes_title(document: nodes.document):
     writer.write(document, output)
 
     assert output.destination == title.astext()
+
+
+@given(document=documents(paragraphs()))
+def test_serializes_paragraph(document: nodes.document):
+    writer = RstWriter()
+    output = StringOutput(encoding="unicode")
+    paragraph = document[0]
+
+    writer.write(document, output)
+
+    assert output.destination == paragraph.astext()
 
 
 @given(document=documents(sections()), adornment_char=section_adornment_char)
