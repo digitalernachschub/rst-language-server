@@ -195,7 +195,7 @@ def test_autocompletes_footnote_labels(
 def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
     tmp_path_factory, data
 ):
-    section: docutils.nodes.section = data.draw(du.sections())
+    section: docutils.nodes.section = data.draw(du.sections(body_elements=[]))
     title: docutils.nodes.title = section[0]
     # No autocompletion when adornment has reached title length
     assume(len(title.astext()) > 1)
@@ -232,7 +232,7 @@ def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
 
 
 @given(
-    section=du.sections(),
+    section=du.sections(body_elements=[]),
     excess_adornment_length=st.integers(min_value=0, max_value=3),
 )
 def test_does_not_autocompletes_title_adornment_when_adornment_has_at_least_title_length(
@@ -307,7 +307,7 @@ def test_updates_completion_suggestions_upon_document_change(tmp_path_factory):
     assert len(response["items"]) > 0
 
 
-@given(sections=st.lists(du.sections()))
+@given(sections=st.lists(du.sections(body_elements=[])))
 def test_reports_section_titles_as_module_symbols(
     tmp_path_factory, sections: List[docutils.nodes.section]
 ):

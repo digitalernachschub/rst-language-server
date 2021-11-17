@@ -94,18 +94,22 @@ def test_serialized_paragraph_is_parsed_by_docutils(document: nodes.document):
     assert doc_repr == parsed_doc_repr
 
 
-@given(document=documents(sections()), adornment_char=section_adornment_char)
-def test_serializes_section(document: nodes.document, adornment_char: str):
+@given(
+    document=documents(sections(body_elements=[])),
+    adornment_char=section_adornment_char,
+)
+def test_serializes_section_title(document: nodes.document, adornment_char: str):
     writer = RstWriter(section_adornment_characters=[adornment_char])
     output = StringOutput(encoding="unicode")
     section = document[0]
+    title = section[0]
 
     writer.write(document, output)
 
     expected_rst = dedent(
         f"""\
-            {section[0].astext()}
-            {column_width(section[0].astext()) * adornment_char}
+            {title.astext()}
+            {column_width(title.astext()) * adornment_char}
         """
     )
     assert output.destination == expected_rst

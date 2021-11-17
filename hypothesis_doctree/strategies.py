@@ -1,4 +1,5 @@
 import re
+from typing import List
 from unicodedata import combining
 
 import docutils.nodes as nodes
@@ -104,13 +105,17 @@ def titles(draw) -> st.SearchStrategy[nodes.title]:
 
 @st.composite
 def sections(
-    draw, title: st.SearchStrategy[nodes.title] = None
+    draw,
+    title: st.SearchStrategy[nodes.title] = None,
+    body_elements: List[st.SearchStrategy[nodes.Element]] = None,
 ) -> st.SearchStrategy[nodes.section]:
+    body_elements_ = body_elements if body_elements is not None else [paragraphs()]
     return draw(
         st.builds(
             nodes.section,
             st.just(""),
             title or titles(),
+            *body_elements_,
         )
     )
 
