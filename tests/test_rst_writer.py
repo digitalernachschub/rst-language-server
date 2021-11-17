@@ -7,7 +7,7 @@ from docutils.io import StringOutput
 from docutils.utils import column_width, new_document
 from hypothesis import given
 
-from hypothesis_docutils import (
+from hypothesis_doctree import (
     emphases,
     footnote_labels,
     sections,
