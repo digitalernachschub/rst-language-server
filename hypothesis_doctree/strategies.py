@@ -40,6 +40,16 @@ def strongs(draw) -> st.SearchStrategy[nodes.emphasis]:
     )
 
 
+@st.composite
+def paragraphs(draw) -> st.SearchStrategy[nodes.paragraph]:
+    return draw(
+        st.builds(
+            nodes.paragraph,
+            text=text,
+        )
+    )
+
+
 # docutils matches auto-numbered footnote labels against the following regex
 # see https://sourceforge.net/p/docutils/code/HEAD/tree/tags/docutils-0.18/docutils/parsers/rst/states.py#l2322
 # see https://sourceforge.net/p/docutils/code/HEAD/tree/tags/docutils-0.18/docutils/parsers/rst/states.py#l673
