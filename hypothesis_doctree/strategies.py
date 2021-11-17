@@ -3,6 +3,7 @@ from unicodedata import combining
 
 import docutils.nodes as nodes
 import hypothesis.strategies as st
+from docutils.utils import new_document
 
 text = st.builds(
     nodes.Text,
@@ -93,3 +94,14 @@ def sections(
             title or titles(),
         )
     )
+
+
+@st.composite
+def documents(
+    draw, *children: st.SearchStrategy[nodes.Element]
+) -> st.SearchStrategy[nodes.document]:
+    doc = new_document("test_doc.rst")
+    for child in children:
+        node = draw(child)
+        doc.append(node)
+    return doc

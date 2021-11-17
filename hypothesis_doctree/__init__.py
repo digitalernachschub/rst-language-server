@@ -1,4 +1,5 @@
 from hypothesis_doctree.strategies import (  # ignore: F401
+    documents,
     emphases,
     footnote_labels,
     inlines,
@@ -9,6 +10,7 @@ from hypothesis_doctree.strategies import (  # ignore: F401
 )
 
 __all__ = (
+    "documents",
     "emphases",
     "footnote_labels",
     "inlines",
