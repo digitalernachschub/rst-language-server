@@ -23,7 +23,7 @@ from tests.rst_writer import RstWriter
 section_adornment_char = st.sampled_from(string.punctuation)
 
 
-@given(document=documents(text))
+@given(document=documents(text()))
 def test_serializes_text(document: nodes.document):
     writer = RstWriter()
     output = StringOutput(encoding="unicode")

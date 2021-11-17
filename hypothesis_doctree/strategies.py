@@ -5,19 +5,26 @@ import docutils.nodes as nodes
 import hypothesis.strategies as st
 from docutils.utils import new_document
 
-text = st.builds(
-    nodes.Text,
-    data=st.text(
-        st.characters(blacklist_categories=["Cc", "Cs"], blacklist_characters="|-+*`"),
-        min_size=1,
+
+@st.composite
+def text(draw) -> st.SearchStrategy[nodes.Text]:
+    return draw(
+        st.builds(
+            nodes.Text,
+            data=st.text(
+                st.characters(
+                    blacklist_categories=["Cc", "Cs"], blacklist_characters="|-+*`"
+                ),
+                min_size=1,
+            )
+            .map(lambda t: t.replace("\\", ""))
+            .map(lambda t: t.replace("_", ""))
+            .map(lambda t: t.strip())
+            .filter(lambda t: t)
+            .filter(lambda t: t[-1] != ".")  # e.g. "0."
+            .filter(lambda t: combining(t[0]) == 0),
+        )
     )
-    .map(lambda t: t.replace("\\", ""))
-    .map(lambda t: t.replace("_", ""))
-    .map(lambda t: t.strip())
-    .filter(lambda t: t)
-    .filter(lambda t: t[-1] != ".")  # e.g. "0."
-    .filter(lambda t: combining(t[0]) == 0),
-)
 
 
 @st.composite
@@ -25,7 +32,7 @@ def emphases(draw) -> st.SearchStrategy[nodes.emphasis]:
     return draw(
         st.builds(
             nodes.emphasis,
-            text=text,
+            text=text(),
         )
     )
 
@@ -35,7 +42,7 @@ def strongs(draw) -> st.SearchStrategy[nodes.emphasis]:
     return draw(
         st.builds(
             nodes.strong,
-            text=text,
+            text=text(),
         )
     )
 
@@ -45,7 +52,7 @@ def paragraphs(draw) -> st.SearchStrategy[nodes.paragraph]:
     return draw(
         st.builds(
             nodes.paragraph,
-            text=text,
+            text=text(),
         )
     )
 
@@ -88,7 +95,7 @@ def titles(draw) -> st.SearchStrategy[nodes.title]:
         st.builds(
             nodes.title,
             st.just(""),
-            text.map(nodes.Text) | inlines(),
+            text().map(nodes.Text) | inlines(),
         )
     )
 
