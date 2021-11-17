@@ -52,7 +52,9 @@ def paragraphs(draw) -> st.SearchStrategy[nodes.paragraph]:
     return draw(
         st.builds(
             nodes.paragraph,
-            text=text(),
+            st.just(""),
+            st.just(""),
+            text() | inlines(),
         )
     )
 

@@ -3,6 +3,7 @@ from textwrap import dedent
 
 import docutils.nodes as nodes
 import hypothesis.strategies as st
+from docutils.core import publish_doctree, publish_from_doctree
 from docutils.io import StringOutput
 from docutils.utils import column_width
 from hypothesis import given
@@ -79,14 +80,18 @@ def test_serializes_title(document: nodes.document):
 
 
 @given(document=documents(paragraphs()))
-def test_serializes_paragraph(document: nodes.document):
+def test_serialized_paragraph_is_parsed_by_docutils(document: nodes.document):
     writer = RstWriter()
     output = StringOutput(encoding="unicode")
-    paragraph = document[0]
 
     writer.write(document, output)
 
-    assert output.destination == paragraph.astext()
+    parsed_doc = publish_doctree(
+        output.destination, source_path=document.current_source
+    )
+    doc_repr = publish_from_doctree(document)
+    parsed_doc_repr = publish_from_doctree(parsed_doc)
+    assert doc_repr == parsed_doc_repr
 
 
 @given(document=documents(sections()), adornment_char=section_adornment_char)
