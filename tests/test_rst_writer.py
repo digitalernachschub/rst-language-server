@@ -4,10 +4,11 @@ from textwrap import dedent
 import docutils.nodes as nodes
 import hypothesis.strategies as st
 from docutils.io import StringOutput
-from docutils.utils import column_width, new_document
+from docutils.utils import column_width
 from hypothesis import given
 
 from hypothesis_doctree import (
+    documents,
     emphases,
     footnote_labels,
     sections,
@@ -21,72 +22,66 @@ from tests.rst_writer import RstWriter
 section_adornment_char = st.sampled_from(string.punctuation)
 
 
-@given(text=text)
-def test_serializes_text(text: nodes.Text):
+@given(document=documents(text))
+def test_serializes_text(document: nodes.document):
     writer = RstWriter()
     output = StringOutput(encoding="unicode")
-    document = new_document("testDoc")
-    document.append(text)
+    text = document[0]
 
     writer.write(document, output)
 
     assert output.destination == text.astext()
 
 
-@given(label=footnote_labels())
-def test_serializes_label(label: nodes.label):
+@given(document=documents(footnote_labels()))
+def test_serializes_label(document: nodes.document):
     writer = RstWriter()
     output = StringOutput(encoding="unicode")
-    document = new_document("testDoc")
-    document.append(label)
+    label = document[0]
 
     writer.write(document, output)
 
     assert output.destination == label.astext()
 
 
-@given(emphasis=emphases())
-def test_serializes_emphasis(emphasis: nodes.emphasis):
+@given(document=documents(emphases()))
+def test_serializes_emphasis(document: nodes.document):
     writer = RstWriter()
     output = StringOutput(encoding="unicode")
-    document = new_document("testDoc")
-    document.append(emphasis)
+    emphasis = document[0]
 
     writer.write(document, output)
 
     assert output.destination == f"*{emphasis.astext()}*"
 
 
-@given(strong=strongs())
-def test_serializes_strong(strong: nodes.strong):
+@given(document=documents(strongs()))
+def test_serializes_strong(document: nodes.document):
     writer = RstWriter()
     output = StringOutput(encoding="unicode")
-    document = new_document("testDoc")
-    document.append(strong)
+    strong = document[0]
 
     writer.write(document, output)
 
     assert output.destination == f"**{strong.astext()}**"
 
 
-@given(title=titles())
-def test_serializes_title(title: nodes.title):
+@given(document=documents(titles()))
+def test_serializes_title(document: nodes.document):
     writer = RstWriter()
     output = StringOutput(encoding="unicode")
-    document = new_document("testDoc")
-    document.append(title)
+    title = document[0]
 
     writer.write(document, output)
 
     assert output.destination == title.astext()
 
 
-@given(section=sections(), adornment_char=section_adornment_char)
-def test_serializes_section(section: nodes.section, adornment_char: str):
+@given(document=documents(sections()), adornment_char=section_adornment_char)
+def test_serializes_section(document: nodes.document, adornment_char: str):
     writer = RstWriter(section_adornment_characters=[adornment_char])
     output = StringOutput(encoding="unicode")
-    document = new_document("testDoc")
-    document.append(section)
+    section = document[0]
 
     writer.write(document, output)
 
