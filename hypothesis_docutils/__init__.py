@@ -1,4 +1,4 @@
-from hypothesis_docutils.docutils_nodes import (  # ignore: F401
+from hypothesis_docutils.strategies import (  # ignore: F401
     emphases,
     footnote_labels,
     inlines,
