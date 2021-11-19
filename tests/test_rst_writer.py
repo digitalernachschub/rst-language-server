@@ -70,13 +70,19 @@ def test_serializes_strong(document: nodes.document):
 
 @given(document=documents(titles()))
 def test_serializes_title(document: nodes.document):
-    writer = RstWriter()
+    writer = RstWriter(section_adornment_characters=["="])
     output = StringOutput(encoding="unicode")
     title = document[0]
 
     writer.write(document, output)
 
-    assert output.destination == title.astext()
+    expected_rst = dedent(
+        f"""\
+            {title.astext()}
+            {column_width(title.astext()) * writer.section_adornment_characters[0]}
+        """
+    )
+    assert output.destination == expected_rst
 
 
 @given(document=documents(paragraphs()))
@@ -113,3 +119,38 @@ def test_serializes_section_title(document: nodes.document, adornment_char: str)
         """
     )
     assert output.destination == expected_rst
+
+
+@given(document=documents(sections()))
+def test_serialized_section_is_parsed_by_docutils(document: nodes.document):
+    writer = RstWriter()
+    output = StringOutput(encoding="unicode")
+
+    writer.write(document, output)
+
+    parsed_doc = publish_doctree(
+        output.destination,
+        source_path=document.current_source,
+        settings_overrides={
+            "doctitle_xform": False,
+            "report_level": 3,  # Errors or worse
+        },
+    )
+    assert document_equals(document, parsed_doc)
+
+
+def document_equals(doc_a: nodes.document, doc_b: nodes.document) -> bool:
+    """Compares the node structure and contents of two documents, ignoring attributes."""
+    # Filter out system_messages, because they cannot seem to be be controlled with report_level
+    children_a = (
+        child for child in doc_a.children if not isinstance(child, nodes.system_message)
+    )
+    children_b = (
+        child for child in doc_b.children if not isinstance(child, nodes.system_message)
+    )
+    for child_a, child_b in zip(children_a, children_b):
+        if child_a.tagname != child_b.tagname:
+            return False
+        if child_a.astext() != child_b.astext():
+            return False
+    return True

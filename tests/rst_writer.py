@@ -9,6 +9,7 @@ from docutils.nodes import (
     emphasis,
     section,
     strong,
+    title,
 )
 from docutils.utils import column_width
 from docutils.writers import Writer
@@ -58,10 +59,12 @@ class _SerializationVisitor(SparseNodeVisitor):
         self._section_level += 1
 
     def depart_section(self, node: section) -> None:
+        self._section_level -= 1
+
+    def depart_title(self, node: title) -> None:
         adornment_char = self.section_adornment_characters[self._section_level]
         adornment = column_width(self.text.splitlines()[-1]) * adornment_char
         self.text += f"\n{adornment}\n"
-        self._section_level -= 1
 
     def unknown_visit(self, node: Node) -> None:
         pass
