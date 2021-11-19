@@ -110,7 +110,7 @@ def sections(
     draw,
     title: st.SearchStrategy[nodes.title] = None,
     min_size: int = 0,
-    max_size: int = 1,
+    max_size: int = None,
 ) -> st.SearchStrategy[nodes.section]:
     children = draw(st.lists(body_elements, min_size=min_size, max_size=max_size))
     return draw(
