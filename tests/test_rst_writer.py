@@ -128,7 +128,7 @@ def test_serializes_section_title(document: nodes.document, adornment_char: str)
     assert output.destination == expected_rst
 
 
-@given(document=sections().map(_wrap_in_document))
+@given(document=sections(max_size=None).map(_wrap_in_document))
 def test_serialized_section_is_parsed_by_docutils(document: nodes.document):
     writer = RstWriter()
     output = StringOutput(encoding="unicode")

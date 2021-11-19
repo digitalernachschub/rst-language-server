@@ -7,6 +7,7 @@ from docutils.nodes import (
     Text,
     document,
     emphasis,
+    paragraph,
     section,
     strong,
     title,
@@ -48,6 +49,9 @@ class _SerializationVisitor(SparseNodeVisitor):
 
     def depart_emphasis(self, node: emphasis) -> None:
         self.text += "*"
+
+    def depart_paragraph(self, node: paragraph) -> None:
+        self.text += "\n\n"
 
     def visit_strong(self, node: strong) -> None:
         self.text += "**"
