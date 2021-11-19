@@ -101,7 +101,7 @@ def test_serialized_paragraph_is_parsed_by_docutils(document: nodes.document):
 
 
 @given(
-    document=documents(sections(body_elements=[])),
+    document=documents(sections(children=[])),
     adornment_char=section_adornment_char,
 )
 def test_serializes_section_title(document: nodes.document, adornment_char: str):

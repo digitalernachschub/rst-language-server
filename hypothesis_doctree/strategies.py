@@ -60,6 +60,9 @@ def paragraphs(draw) -> st.SearchStrategy[nodes.paragraph]:
     )
 
 
+simple_body_elements = paragraphs()
+body_elements = simple_body_elements
+
 # docutils matches auto-numbered footnote labels against the following regex
 # see https://sourceforge.net/p/docutils/code/HEAD/tree/tags/docutils-0.18/docutils/parsers/rst/states.py#l2322
 # see https://sourceforge.net/p/docutils/code/HEAD/tree/tags/docutils-0.18/docutils/parsers/rst/states.py#l673
@@ -107,15 +110,15 @@ def titles(draw) -> st.SearchStrategy[nodes.title]:
 def sections(
     draw,
     title: st.SearchStrategy[nodes.title] = None,
-    body_elements: List[st.SearchStrategy[nodes.Element]] = None,
+    children: List[st.SearchStrategy[nodes.Element]] = None,
 ) -> st.SearchStrategy[nodes.section]:
-    body_elements_ = body_elements if body_elements is not None else [paragraphs()]
+    children = children if children is not None else [body_elements]
     return draw(
         st.builds(
             nodes.section,
             st.just(""),
             title or titles(),
-            *body_elements_,
+            *children,
         )
     )
 
