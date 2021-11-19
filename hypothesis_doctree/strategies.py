@@ -1,5 +1,4 @@
 import re
-from typing import List
 from unicodedata import combining
 
 import docutils.nodes as nodes
@@ -110,15 +109,16 @@ def titles(draw) -> st.SearchStrategy[nodes.title]:
 def sections(
     draw,
     title: st.SearchStrategy[nodes.title] = None,
-    children: List[st.SearchStrategy[nodes.Element]] = None,
+    min_size: int = 0,
+    max_size: int = 1,
 ) -> st.SearchStrategy[nodes.section]:
-    children = children if children is not None else [body_elements]
+    children = draw(st.lists(body_elements, min_size=min_size, max_size=max_size))
     return draw(
         st.builds(
             nodes.section,
             st.just(""),
             title or titles(),
-            *children,
+            *(map(st.just, children)),
         )
     )
 

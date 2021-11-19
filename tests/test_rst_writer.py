@@ -1,11 +1,12 @@
 import string
 from textwrap import dedent
+from typing import Union
 
 import docutils.nodes as nodes
 import hypothesis.strategies as st
 from docutils.core import publish_doctree, publish_from_doctree
 from docutils.io import StringOutput
-from docutils.utils import column_width
+from docutils.utils import column_width, new_document
 from hypothesis import given
 
 from hypothesis_doctree import (
@@ -24,7 +25,13 @@ from tests.rst_writer import RstWriter
 section_adornment_char = st.sampled_from(string.punctuation)
 
 
-@given(document=documents(text()))
+def _wrap_in_document(child: Union[nodes.Element, nodes.Text]) -> nodes.document:
+    doc = new_document("test_doc.rst")
+    doc.append(child)
+    return doc
+
+
+@given(document=text().map(_wrap_in_document))
 def test_serializes_text(document: nodes.document):
     writer = RstWriter()
     output = StringOutput(encoding="unicode")
@@ -35,7 +42,7 @@ def test_serializes_text(document: nodes.document):
     assert output.destination == text.astext()
 
 
-@given(document=documents(footnote_labels()))
+@given(document=footnote_labels().map(_wrap_in_document))
 def test_serializes_label(document: nodes.document):
     writer = RstWriter()
     output = StringOutput(encoding="unicode")
@@ -46,7 +53,7 @@ def test_serializes_label(document: nodes.document):
     assert output.destination == label.astext()
 
 
-@given(document=documents(emphases()))
+@given(document=emphases().map(_wrap_in_document))
 def test_serializes_emphasis(document: nodes.document):
     writer = RstWriter()
     output = StringOutput(encoding="unicode")
@@ -57,7 +64,7 @@ def test_serializes_emphasis(document: nodes.document):
     assert output.destination == f"*{emphasis.astext()}*"
 
 
-@given(document=documents(strongs()))
+@given(document=strongs().map(_wrap_in_document))
 def test_serializes_strong(document: nodes.document):
     writer = RstWriter()
     output = StringOutput(encoding="unicode")
@@ -68,7 +75,7 @@ def test_serializes_strong(document: nodes.document):
     assert output.destination == f"**{strong.astext()}**"
 
 
-@given(document=documents(titles()))
+@given(document=titles().map(_wrap_in_document))
 def test_serializes_title(document: nodes.document):
     writer = RstWriter(section_adornment_characters=["="])
     output = StringOutput(encoding="unicode")
@@ -85,7 +92,7 @@ def test_serializes_title(document: nodes.document):
     assert output.destination == expected_rst
 
 
-@given(document=documents(paragraphs()))
+@given(document=paragraphs().map(_wrap_in_document))
 def test_serialized_paragraph_is_parsed_by_docutils(document: nodes.document):
     writer = RstWriter()
     output = StringOutput(encoding="unicode")
@@ -101,7 +108,7 @@ def test_serialized_paragraph_is_parsed_by_docutils(document: nodes.document):
 
 
 @given(
-    document=documents(sections(children=[])),
+    document=sections(max_size=0).map(_wrap_in_document),
     adornment_char=section_adornment_char,
 )
 def test_serializes_section_title(document: nodes.document, adornment_char: str):
@@ -121,7 +128,7 @@ def test_serializes_section_title(document: nodes.document, adornment_char: str)
     assert output.destination == expected_rst
 
 
-@given(document=documents(sections()))
+@given(document=sections().map(_wrap_in_document))
 def test_serialized_section_is_parsed_by_docutils(document: nodes.document):
     writer = RstWriter()
     output = StringOutput(encoding="unicode")
