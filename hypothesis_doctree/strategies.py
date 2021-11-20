@@ -111,16 +111,26 @@ def sections(
     title: st.SearchStrategy[nodes.title] = None,
     min_size: int = 0,
     max_size: int = None,
-) -> st.SearchStrategy[nodes.section]:
-    children = draw(st.lists(body_elements, min_size=min_size, max_size=max_size))
-    return draw(
-        st.builds(
-            nodes.section,
-            st.just(""),
-            title or titles(),
-            *(map(st.just, children)),
+    max_level: int = 5,
+) -> nodes.section:
+    assert max_level > 0, "max_level must be greater than 0"
+    title_strategy = title or titles()
+    if max_level == 1:
+        child_strategy = body_elements
+    else:
+        child_strategy = st.recursive(
+            body_elements,
+            lambda c: st.builds(nodes.section, st.just(""), title_strategy, c),
+            max_leaves=max_level,
         )
+    children_strategy = st.lists(child_strategy, min_size=min_size, max_size=max_size)
+    children = draw(children_strategy)
+    section = nodes.section(
+        st.just(""),
+        draw(title_strategy),
+        *children,
     )
+    return section
 
 
 @st.composite
