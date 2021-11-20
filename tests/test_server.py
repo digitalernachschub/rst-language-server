@@ -307,7 +307,7 @@ def test_updates_completion_suggestions_upon_document_change(tmp_path_factory):
     assert len(response["items"]) > 0
 
 
-@given(sections=st.lists(du.sections(max_size=0)))
+@given(sections=st.lists(du.sections(max_level=1)))
 def test_reports_section_titles_as_module_symbols(
     tmp_path_factory, sections: List[docutils.nodes.section]
 ):
@@ -328,14 +328,14 @@ def test_reports_section_titles_as_module_symbols(
 
     symbols = parse_obj_as(List[DocumentSymbol], response)
     assert len(symbols) == len(sections)
+    previous_section_end = 0
     for symbol_index, symbol in enumerate(symbols):
         section = sections[symbol_index]
         section_title = section[0]
         assert symbol.name == section_title.astext()
         assert symbol.kind == SymbolKind.Class
-        assert symbol.range.start == Position(line=2 * symbol_index, character=0)
-        assert symbol.range.end == Position(
-            line=2 * symbol_index + 1,
-            character=column_width(text.splitlines()[2 * symbol_index + 1]),
-        )
+        expected_line_start = previous_section_end + 1 if previous_section_end else 0
+        assert symbol.range.start == Position(line=expected_line_start, character=0)
+        assert symbol.range.end.line < len(text.splitlines())
         assert symbol.selection_range == symbol.range
+        previous_section_end = symbol.range.end.line
