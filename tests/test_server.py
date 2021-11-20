@@ -330,7 +330,8 @@ def test_reports_section_titles_as_module_symbols(
     assert len(symbols) == len(sections)
     for symbol_index, symbol in enumerate(symbols):
         section = sections[symbol_index]
-        assert symbol.name == section.astext()
+        section_title = section[0]
+        assert symbol.name == section_title.astext()
         assert symbol.kind == SymbolKind.Class
         assert symbol.range.start == Position(line=2 * symbol_index, character=0)
         assert symbol.range.end == Position(
