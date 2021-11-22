@@ -11,7 +11,7 @@ RST Language Server is intended to be used by text editors implementing the clie
 Testing with Kate
 =================
 
-Using RST Language Server with `Kate`_ requires the `LSP Client Plugin`_. Once the plugin is activated in the settings a new settings symbol named *LSP-Client* appears. Click on the section, select the *Use server configuration* tab and paste the following server configuration.
+Using RST Language Server with `Kate`_ requires the `LSP Client Plugin`_. Once the plugin is activated in the settings a new settings symbol named *LSP-Client* appears. Click on the section, select the *User Server Settings* tab and paste the following server configuration.
 
 .. code:: json
 
