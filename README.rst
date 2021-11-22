@@ -8,6 +8,12 @@ RST Language Server is intended to be used by text editors implementing the clie
 .. _reStructuredText: https://docutils.sourceforge.io/rst.html
 .. _Language Server Protocol: https://microsoft.github.io/language-server-protocol/
 
+Features
+========
+Autocompletion of title adornments
+
+.. image:: assets/autocomplete_title_adornments.webp
+
 Testing with Kate
 =================
 
