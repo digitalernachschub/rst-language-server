@@ -35,3 +35,8 @@ This will start RST Language Server when opening any file that is configured to 
 
 .. _Kate: https://apps.kde.org/kate/
 .. _LSP Client Plugin: https://docs.kde.org/stable5/en/kate/kate/kate-application-plugin-lspclient.html
+
+
+Is my editor supported?
+=======================
+RST Language Server can be used with any text editor that implements a Language Client. See `this list <https://langserver.org/#implementations-client>`_ of Language Client implementations.
