@@ -4,6 +4,12 @@ version = "0.1.0"
 description = ""
 authors = ["Michael Seifert <m.seifert@digitalernachschub.de>"]
 license = "MIT"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Operating System :: OS Independent",
+    "Topic :: Text Editors",
+]
 
 [tool.poetry.dependencies]
 python = "^3.9"
