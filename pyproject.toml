@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "rst-language-server"
 version = "0.1.0"
-description = ""
+description = "Server implementation of the Language Server Protocol for reStructuredText"
 authors = ["Michael Seifert <m.seifert@digitalernachschub.de>"]
 license = "MIT"
 classifiers = [
