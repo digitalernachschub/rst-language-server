@@ -11,6 +11,7 @@ classifiers = [
     "Topic :: Text Editors",
 ]
 repository = "https://github.com/digitalernachschub/rst-language-server"
+readme = "README.rst"
 
 [tool.poetry.dependencies]
 python = "^3.9"
