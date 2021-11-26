@@ -14,8 +14,8 @@ Autocompletion of title adornments
 
 .. image:: assets/autocomplete_title_adornments.webp
 
-Testing with Kate
-=================
+Usage with Kate
+===============
 
 Using RST Language Server with `Kate`_ requires the `LSP Client Plugin`_. Once the plugin is activated in the settings a new settings symbol named *LSP-Client* appears. Click on the section, select the *User Server Settings* tab and paste the following server configuration.
 
@@ -24,8 +24,7 @@ Using RST Language Server with `Kate`_ requires the `LSP Client Plugin`_. Once t
     {
         "servers": {
             "rst": {
-                "command": ["poetry", "run", "rst-ls"],
-                "root": "/path/to/rst-language-server-repo",
+                "command": ["rst-ls"],
                 "highlightingModeRegex": "^reStructuredText$"
             }
         }
