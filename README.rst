@@ -24,7 +24,7 @@ Using RST Language Server with `Kate`_ requires the `LSP Client Plugin`_. Once t
     {
         "servers": {
             "rst": {
-                "command": ["poetry", "run", "python", "-m", "rst_language_server"],
+                "command": ["poetry", "run", "rst-ls"],
                 "root": "/path/to/rst-language-server-repo",
                 "highlightingModeRegex": "^reStructuredText$"
             }
