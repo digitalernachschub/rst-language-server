@@ -40,3 +40,20 @@ This will start RST Language Server when opening any file that is configured to 
 Is my editor supported?
 =======================
 RST Language Server can be used with any text editor that implements a Language Client. See `this list <https://langserver.org/#implementations-client>`_ of Language Client implementations.
+
+
+Development configuration with Kate
+===================================
+The RST Language Server is executed as a subprocess of the Language Client. Therefore, if we want to see log output in Kate we need to write the logs to a file using the `--log-file` command line option. We also set the log level to `debug` in order to view the JSON-RPC messages exchanged between client and server. Lastly, we configure the `root` (i.e. the working directory of the executed command) to the directory where our source code lives in and use `poetry run` to execute the code in the Git repository:
+
+.. code:: json
+
+    {
+        "servers": {
+            "rst": {
+                "command": ["poetry", "run", "rst-ls", "--log-file=/tmp/rst-ls.log", "--log-level=debug"],
+                "root": "/path/to/rst-language-server-repo",
+                "highlightingModeRegex": "^reStructuredText$"
+            }
+        }
+    }
