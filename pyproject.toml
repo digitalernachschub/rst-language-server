@@ -29,7 +29,7 @@ hypothesis = "^6.24.2"
 pytest-cov = "^3.0.0"
 
 [tool.poetry.scripts]
-rst-ls = "rst_language_server:main"
+rst-ls = "rst_language_server.cli:main"
 
 [tool.isort]
 profile = "black"
