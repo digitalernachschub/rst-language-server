@@ -23,6 +23,9 @@ pytest = "^6.2"
 hypothesis = "^6.24.2"
 pytest-cov = "^3.0.0"
 
+[tool.poetry.scripts]
+rst-ls = "rst_language_server:main"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
