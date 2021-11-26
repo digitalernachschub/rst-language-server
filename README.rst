@@ -14,6 +14,14 @@ Autocompletion of title adornments
 
 .. image:: assets/autocomplete_title_adornments.webp
 
+Installation
+============
+RST Language Server is available as a package on PyPI and can be installed via `pip`:
+
+.. code:: sh
+
+    $ pip install --user rst-language-server
+
 Usage with Kate
 ===============
 
