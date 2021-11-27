@@ -198,7 +198,7 @@ def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
     section: docutils.nodes.section = data.draw(du.sections(max_size=0))
     title: docutils.nodes.title = section[0]
     # No autocompletion when adornment has reached title length
-    assume(len(title.astext()) > 1)
+    assume(column_width(title.astext()) > 1)
     document = new_document("testDoc")
     document.append(section)
     rst_writer = RstWriter()
