@@ -102,7 +102,7 @@ def test_serialized_paragraph_is_parsed_by_docutils(document: nodes.document):
         output.destination, source_path=document.current_source
     )
     doc_repr = publish_from_doctree(document)
-    parsed_doc_repr = publish_from_doctree(parsed_doc)
+    parsed_doc_repr = publish_from_doctree(_filter_system_messages(parsed_doc))
     assert doc_repr == parsed_doc_repr
 
 
