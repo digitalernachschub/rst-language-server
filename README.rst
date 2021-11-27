@@ -1,7 +1,7 @@
 ===================
 RST Language Server
 ===================
-|supported-versions|
+|version| |supported-versions|
 
 RST Language Server implements the server side of the `Language Server Protocol`_ (LSP) for the `reStructuredText`_ markup language.
 
@@ -69,3 +69,4 @@ The RST Language Server is executed as a subprocess of the Language Client. Ther
 
 
 .. |supported-versions| image:: https://img.shields.io/pypi/pyversions/rst-language-server?style=flat-square
+.. |version| image:: https://img.shields.io/pypi/v/rst-language-server?style=flat-square
