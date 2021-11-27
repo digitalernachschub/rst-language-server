@@ -54,7 +54,7 @@ text = (
     .map(lambda t: t.replace("_", ""))
     .map(lambda t: t.strip())
     .filter(lambda t: t)
-    .filter(lambda t: t[-1] != ".")  # e.g. "0."
+    .filter(lambda t: t[-1] not in ".)")  # e.g. "0.", "0)"
 )
 
 footnote_content = text
