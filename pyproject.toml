@@ -16,6 +16,7 @@ classifiers = [
 ]
 repository = "https://github.com/digitalernachschub/rst-language-server"
 readme = "README.rst"
+include = ["CHANGELOG.rst"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
