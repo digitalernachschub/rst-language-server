@@ -23,10 +23,11 @@ _log_level_names = [
     help="Sets the minimum severity for log output",
 )
 def rst_ls(log_file, log_level: str):
-    file_handler = logging.FileHandler(filename=log_file)
-    pygls_logger = logging.getLogger("pygls")
-    pygls_logger.setLevel(log_level.upper())
-    pygls_logger.addHandler(file_handler)
+    if log_file:
+        file_handler = logging.FileHandler(filename=log_file)
+        pygls_logger = logging.getLogger("pygls")
+        pygls_logger.setLevel(log_level.upper())
+        pygls_logger.addHandler(file_handler)
     server_ = create_server()
     server_.start_io()
 

@@ -16,6 +16,15 @@ def test_help_option_shows_help():
     assert result.stdout
 
 
+def test_starts_without_any_arguments():
+    cli = CliRunner()
+
+    with patch("rst_language_server.server.create_server"):
+        status = cli.invoke(rst_ls, [], catch_exceptions=False)
+
+    assert status.exit_code == 0
+
+
 def test_log_file_option_configures_file_for_pygls_logger(tmp_path):
     cli = CliRunner()
     log_file = tmp_path / "output.log"
