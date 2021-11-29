@@ -5,19 +5,33 @@ on:
   - pull_request
 
 jobs:
-  test:
-    name: Tests on "${{ matrix.platform }}" for "${{ matrix.python-version }}"
-    runs-on: "${{ matrix.platform }}"
+  test-python:
+    name: Tests on Linux for "${{ matrix.python-version }}"
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10"]
-        platform: [ubuntu-latest, macos-latest, windows-latest]
-
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install
+        run: pip install poetry==1.1.11 tox==3.24.4 tox-gh-actions==2.8.1
+      - name: Test with tox
+        run: poetry run tox
+
+  test-platform:
+    name: Tests on "${{ matrix.platform }}" for 3.7
+    runs-on: "${{ matrix.platform }}"
+    strategy:
+      matrix:
+        platform: [macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.7"
       - name: Install
         run: pip install poetry==1.1.11 tox==3.24.4 tox-gh-actions==2.8.1
       - name: Test with tox
