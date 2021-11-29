@@ -235,7 +235,7 @@ def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
     section=du.sections(max_size=0),
     excess_adornment_length=st.integers(min_value=0, max_value=3),
 )
-def test_does_not_autocompletes_title_adornment_when_adornment_has_at_least_title_length(
+def test_does_not_autocomplete_title_adornment_when_adornment_has_at_least_title_length(
     tmp_path_factory, section, excess_adornment_length
 ):
     document = new_document("testDoc")
