@@ -45,6 +45,38 @@ This will start RST Language Server when opening any file that is configured to 
 .. _Kate: https://apps.kde.org/kate/
 .. _LSP Client Plugin: https://docs.kde.org/stable5/en/kate/kate/kate-application-plugin-lspclient.html
 
+Usage with Neovim
+=================
+There are numerous ways to use Language Servers in with Neovim. This setup configuration assumes that you use `nvim-lspconfig`_.
+
+To registers RST Language Server with nvim-lspconfig, add the following lua code before requiring `lspconfig` and calling the corresponding `setup` function of the language server:
+
+.. code::
+
+  -- Register rst-ls with lspconfig
+  local configs = require "lspconfig/configs"
+  local util = require "lspconfig/util"
+
+  configs.rst_language_server = {
+    default_config = {
+      cmd = { "rst-ls" },
+      filetypes = { "rst" },
+      root_dir = util.path.dirname,
+    },
+    docs = {
+      description = [[
+  https://github.com/digitalernachschub/rst-language-server
+  Server implementation of the Language Server Protocol for reStructuredText.
+  ]],
+      default_config = {
+        root_dir = [[root_pattern(".git")]],
+      },
+    },
+  }
+
+Note that this setup currently `requires Neovim Nightly (0.6). <https://neovim.discourse.group/t/how-to-add-custom-lang-server-without-fork-and-send-a-pr-to-nvim-lspconfig-repo-resolved/1170/1>`_
+
+.. _nvim-lspconfig: https://github.com/neovim/nvim-lspconfig
 
 Is my editor supported?
 =======================
