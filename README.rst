@@ -82,6 +82,14 @@ Is my editor supported?
 =======================
 RST Language Server can be used with any text editor that implements a Language Client. See `this list <https://langserver.org/#implementations-client>`_ of Language Client implementations.
 
+Feature Matrix
+--------------
++------------------------------------+------+--------+
+| Feature \\ Editor                  | Kate | Neovim |
++====================================+======+========+
+| Autocompletion of title adornments | ✔    | ⨯      |
++------------------------------------+------+--------+
+
 
 Development configuration with Kate
 ===================================
