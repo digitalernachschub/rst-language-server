@@ -13,3 +13,8 @@ Features
 Fixes
 -----
 - rst-ls no longer crashes when started without a log file
+
+
+v0.1.0 (2021-11-26)
+===================
+Initial release with support for completion of title adornments in Kate
