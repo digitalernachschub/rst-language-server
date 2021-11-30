@@ -26,7 +26,7 @@ from pygls.lsp.types import (
 from pygls.server import LanguageServer
 
 
-def create_server() -> LanguageServer:
+def create_server(client_insert_text_interpretation: bool = True) -> LanguageServer:
     rst_language_server = LanguageServer()
     index = {
         "footnotes": [],
@@ -106,10 +106,14 @@ def create_server() -> LanguageServer:
         title_width = column_width(lines[previous_line_index])
         if current_line_length >= title_width:
             return ()
+        if client_insert_text_interpretation:
+            insert_text = title_width * adornment_char
+        else:
+            insert_text = (title_width - current_line_length) * adornment_char
         return (
             CompletionItem(
                 label=3 * adornment_char,
-                insert_text=(title_width - current_line_length) * adornment_char,
+                insert_text=insert_text,
             ),
         )
 

@@ -61,7 +61,7 @@ footnote_content = text
 
 
 @contextmanager
-def _client() -> "LspClient":
+def _client(client_insert_text_interpretation: bool = True) -> "LspClient":
     # Establish pipes for communication between server and tests
     stdout_read_fd, stdout_write_fd = os.pipe()
     stdin_read_fd, stdin_write_fd = os.pipe()
@@ -72,7 +72,7 @@ def _client() -> "LspClient":
         stdout_write_fd, "wb"
     )
 
-    server = create_server()
+    server = create_server(client_insert_text_interpretation)
     transport = StdOutTransportAdapter(stdin_read, stdout_write)
     server.lsp.connection_made(transport)
 
@@ -225,9 +225,29 @@ def test_autocompletes_title_adornment_when_chars_are_present_at_line_start(
     assert len(response["items"]) > 0
     suggestion = response["items"][0]
     assert suggestion.get("label") == 3 * adornment_char
+    assert suggestion.get("insertText") == column_width(title_line) * adornment_char
+
+
+def test_adornment_completion_contains_reduced_text_when_server_assumes_no_client_side_interpretation(
+    tmp_path_factory,
+):
+    title_line = "MyHeading"
+    adornment_line = "==="
+    server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
+    file_path: Path = server_root / f"test_file.rst"
+    with _client(client_insert_text_interpretation=False) as client:
+        client.initialize(server_root.as_uri())
+        client.open(uri=file_path.as_uri(), text=f"{title_line}\n{adornment_line}\n")
+
+        response = client.complete(
+            file_path.as_uri(), line=1, character=len(adornment_line)
+        ).result
+
+    assert len(response["items"]) > 0
+    suggestion = response["items"][0]
     assert (
         suggestion.get("insertText")
-        == (column_width(title_line) - existing_adornment_chars) * adornment_char
+        == (column_width(title_line) - len(adornment_line)) * "="
     )
 
 

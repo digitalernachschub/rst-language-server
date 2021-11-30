@@ -28,7 +28,7 @@ def rst_ls(log_file, log_level: str):
         pygls_logger = logging.getLogger("pygls")
         pygls_logger.setLevel(log_level.upper())
         pygls_logger.addHandler(file_handler)
-    server_ = create_server()
+    server_ = create_server(client_insert_text_interpretation=False)
     server_.start_io()
 
 
