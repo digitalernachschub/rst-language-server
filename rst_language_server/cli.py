@@ -22,13 +22,20 @@ _log_level_names = [
     default="info",
     help="Sets the minimum severity for log output",
 )
-def rst_ls(log_file, log_level: str):
+@click.option(
+    "--client-insert-text-interpretation",
+    type=bool,
+    default=True,
+    show_default=True,
+    help="Whether a client interprets the text returned in autocompletion responses",
+)
+def rst_ls(log_file, log_level: str, client_insert_text_interpretation: bool):
     if log_file:
         file_handler = logging.FileHandler(filename=log_file)
         pygls_logger = logging.getLogger("pygls")
         pygls_logger.setLevel(log_level.upper())
         pygls_logger.addHandler(file_handler)
-    server_ = create_server(client_insert_text_interpretation=False)
+    server_ = create_server(client_insert_text_interpretation)
     server_.start_io()
 
 

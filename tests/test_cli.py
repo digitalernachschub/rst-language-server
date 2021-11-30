@@ -63,3 +63,17 @@ def test_log_level_option_configures_level_for_pygls_logger(tmp_path, log_level:
 
     logger = logging.getLogger("pygls")
     assert logging.getLevelName(logger.level) == log_level.upper()
+
+
+@pytest.mark.parametrize("flag", (True, False))
+def test_client_insert_text_interpretation_propagates_config_value(flag: bool):
+    cli = CliRunner()
+
+    with patch("rst_language_server.cli.create_server") as create_call:
+        cli.invoke(
+            rst_ls,
+            [f"--client-insert-text-interpretation={str(flag).lower()}"],
+            catch_exceptions=False,
+        )
+
+    create_call.assert_called_once_with(flag)

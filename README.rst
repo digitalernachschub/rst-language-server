@@ -34,7 +34,7 @@ Using RST Language Server with `Kate`_ requires the `LSP Client Plugin`_. Once t
     {
         "servers": {
             "rst": {
-                "command": ["rst-ls"],
+                "command": ["rst-ls", "--client-insert-text-interpretation=false"],
                 "highlightingModeRegex": "^reStructuredText$"
             }
         }
@@ -87,7 +87,7 @@ Feature Matrix
 +------------------------------------+------+--------+
 | Feature \\ Editor                  | Kate | Neovim |
 +====================================+======+========+
-| Autocompletion of title adornments | ✔    | ⨯      |
+| Autocompletion of title adornments | ✔    | ✔      |
 +------------------------------------+------+--------+
 
 
@@ -100,7 +100,7 @@ The RST Language Server is executed as a subprocess of the Language Client. Ther
     {
         "servers": {
             "rst": {
-                "command": ["poetry", "run", "rst-ls", "--log-file=/tmp/rst-ls.log", "--log-level=debug"],
+                "command": ["poetry", "run", "rst-ls", "--log-file=/tmp/rst-ls.log", "--log-level=debug", "--client-insert-text-interpretation=false"],
                 "root": "/path/to/rst-language-server-repo",
                 "highlightingModeRegex": "^reStructuredText$"
             }
