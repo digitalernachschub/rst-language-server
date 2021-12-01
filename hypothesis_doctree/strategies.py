@@ -48,6 +48,17 @@ def strongs(draw) -> st.SearchStrategy[nodes.emphasis]:
 
 
 @st.composite
+def subscripts(draw) -> nodes.subscript:
+    return draw(
+        st.builds(
+            nodes.subscript,
+            st.just(""),
+            text(),
+        )
+    )
+
+
+@st.composite
 def paragraphs(draw) -> st.SearchStrategy[nodes.paragraph]:
     return draw(
         st.builds(
