@@ -328,7 +328,7 @@ def test_updates_completion_suggestions_upon_document_change(tmp_path_factory):
     assert len(response["items"]) > 0
 
 
-@given(sections=st.lists(du.sections(max_size=5, max_level=1)))
+@given(sections=st.lists(du.sections(max_size=3, max_level=1)))
 def test_reports_section_titles_as_class_symbols(
     tmp_path_factory, sections: List[docutils.nodes.section]
 ):
