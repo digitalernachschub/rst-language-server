@@ -91,9 +91,10 @@ Feature Matrix
 +====================================+======+========+
 | Autocompletion of title adornments | ✔    | ✔      |
 +------------------------------------+------+--------+
-| Section symbols                    | ✔    | ?      |
+| Section symbols                    | ✔    | ✔ [#]_ |
 +------------------------------------+------+--------+
 
+.. [#] Tested with `Aerial <https://github.com/stevearc/aerial.nvim>`_
 
 Development configuration with Kate
 ===================================
