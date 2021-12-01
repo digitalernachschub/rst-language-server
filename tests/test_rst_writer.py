@@ -15,6 +15,7 @@ from hypothesis_doctree import (
     paragraphs,
     sections,
     strongs,
+    subscripts,
     text,
     titles,
 )
@@ -72,6 +73,17 @@ def test_serializes_strong(document: nodes.document):
     writer.write(document, output)
 
     assert output.destination == f"**{strong.astext()}**"
+
+
+@given(document=subscripts().map(_wrap_in_document))
+def test_serializes_subscripts(document: nodes.document):
+    writer = RstWriter()
+    output = StringOutput(encoding="unicode")
+    subscript = document[0]
+
+    writer.write(document, output)
+
+    assert output.destination == f":sub:`{subscript.astext()}`"
 
 
 @given(document=titles().map(_wrap_in_document))
