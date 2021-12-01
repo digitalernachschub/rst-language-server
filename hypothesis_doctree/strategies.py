@@ -76,7 +76,7 @@ def paragraphs(draw) -> st.SearchStrategy[nodes.paragraph]:
             nodes.paragraph,
             st.just(""),
             st.just(""),
-            text() | inlines(),
+            text() | _inline_elements(),
         )
     )
 
@@ -112,7 +112,7 @@ def footnote_labels(draw) -> st.SearchStrategy[nodes.label]:
 
 
 @st.composite
-def inlines(draw) -> st.SearchStrategy[nodes.inline]:
+def _inline_elements(draw) -> st.SearchStrategy[nodes.inline]:
     return draw(st.one_of(emphases(), strongs(), subscripts(), superscripts()))
 
 
@@ -122,7 +122,7 @@ def titles(draw) -> st.SearchStrategy[nodes.title]:
         st.builds(
             nodes.title,
             st.just(""),
-            text().map(nodes.Text) | inlines(),
+            text().map(nodes.Text) | _inline_elements(),
         )
     )
 
