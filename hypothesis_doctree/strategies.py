@@ -59,6 +59,17 @@ def subscripts(draw) -> nodes.subscript:
 
 
 @st.composite
+def superscripts(draw) -> nodes.superscript:
+    return draw(
+        st.builds(
+            nodes.superscript,
+            st.just(""),
+            text(),
+        )
+    )
+
+
+@st.composite
 def paragraphs(draw) -> st.SearchStrategy[nodes.paragraph]:
     return draw(
         st.builds(

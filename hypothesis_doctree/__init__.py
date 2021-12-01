@@ -7,6 +7,7 @@ from hypothesis_doctree.strategies import (  # ignore: F401
     sections,
     strongs,
     subscripts,
+    superscripts,
     text,
     titles,
 )
@@ -20,6 +21,7 @@ __all__ = (
     "sections",
     "strongs",
     "subscripts",
+    "superscripts",
     "text",
     "titles",
 )
