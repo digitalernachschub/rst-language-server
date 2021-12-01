@@ -1,5 +1,6 @@
 import string
-from typing import Iterable, List, Tuple
+from dataclasses import dataclass
+from typing import Iterable
 
 from docutils.frontend import OptionParser
 from docutils.nodes import Node, SparseNodeVisitor, document, footnote, section
@@ -24,6 +25,13 @@ from pygls.lsp.types import (
     SymbolKind,
 )
 from pygls.server import LanguageServer
+
+
+@dataclass
+class _Section:
+    name: str
+    start: int
+    end: int
 
 
 def create_server(client_insert_text_interpretation: bool = True) -> LanguageServer:
@@ -126,31 +134,30 @@ def create_server(client_insert_text_interpretation: bool = True) -> LanguageSer
 
         class SymbolVisitor(SparseNodeVisitor):
             def visit_section(self, node: section) -> None:
-                index["sections"][doc_id].append(node)
+                section_title = node[0]
+                section_start = node.line - 2
+                s = _Section(
+                    name=section_title.astext(),
+                    start=section_start,
+                    end=-1,
+                )
+                if index["sections"][doc_id]:
+                    # Shorten the end of the last section
+                    index["sections"][doc_id][-1].end = section_start - 1
+                index["sections"][doc_id].append(s)
+
+            def depart_section(self, node: section) -> None:
+                # Extend the end of the section to the end of the document
+                # This will be shortened as soon as a new section follows
+                index["sections"][doc_id][-1].end = len(document.lines) - 1
 
             def unknown_visit(self, node: Node) -> None:
                 pass
 
-        rst.walk(SymbolVisitor(rst))
-        section_lines: List[Tuple[str, int, int]] = []
-        last_section_name, last_section_start = None, None
-        for s in index["sections"][doc_id]:
-            name = s[0].astext()
-            start = s.line - 2
-            if section_lines:
-                # Extend length of last section until start of new section
-                section_lines[-1] = last_section_name, last_section_start, start - 1
-            section_lines.append((name, start, -1))
-            last_section_name, last_section_start, _ = section_lines[-1]
-        if section_lines:
-            # Extend length of last section to the end of the document
-            section_lines[-1] = (
-                section_lines[-1][0],
-                section_lines[-1][1],
-                len(document.lines) - 1,
-            )
+        rst.walkabout(SymbolVisitor(rst))
         symbols = []
-        for name, start, end in section_lines:
+        for s in index["sections"][doc_id]:
+            name, start, end = s.name, s.start, s.end
             last_line_length = len(document.lines[end])
             section_range = Range(
                 start=Position(line=start, character=0),
