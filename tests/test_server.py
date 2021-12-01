@@ -387,12 +387,12 @@ def test_reports_nested_sections_as_nested_symbols(tmp_path_factory):
 
     symbols = parse_obj_as(List[DocumentSymbol], response)
     lines = text.splitlines()
-    assert len(symbols) == 4
+    assert len(symbols) == 2
     assert symbols[0].range.start == Position(line=0, character=0)
     assert symbols[0].range.end == Position(line=7, character=len(lines[7]))
-    assert symbols[1].range.start == Position(line=2, character=0)
-    assert symbols[1].range.end == Position(line=5, character=len(lines[5]))
-    assert symbols[2].range.start == Position(line=6, character=0)
-    assert symbols[2].range.end == Position(line=7, character=len(lines[7]))
-    assert symbols[3].range.start == Position(line=8, character=0)
-    assert symbols[3].range.end == Position(line=9, character=len(lines[9]))
+    assert symbols[0].children[0].range.start == Position(line=2, character=0)
+    assert symbols[0].children[0].range.end == Position(line=5, character=len(lines[5]))
+    assert symbols[0].children[1].range.start == Position(line=6, character=0)
+    assert symbols[0].children[1].range.end == Position(line=7, character=len(lines[7]))
+    assert symbols[1].range.start == Position(line=8, character=0)
+    assert symbols[1].range.end == Position(line=9, character=len(lines[9]))

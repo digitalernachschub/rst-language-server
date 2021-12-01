@@ -1,7 +1,6 @@
 import string
-from collections import defaultdict
-from dataclasses import dataclass
-from typing import Iterable
+from dataclasses import dataclass, field
+from typing import Iterable, List
 
 from docutils.frontend import OptionParser
 from docutils.nodes import Node, SparseNodeVisitor, document, footnote, section
@@ -33,6 +32,12 @@ class _Section:
     name: str
     start: int
     end: int
+    subsections: List["_Section"] = field(default_factory=list)
+
+    def end_at(self, line: int):
+        self.end = line
+        if self.subsections:
+            self.subsections[-1].end_at(line)
 
 
 def create_server(client_insert_text_interpretation: bool = True) -> LanguageServer:
@@ -129,64 +134,68 @@ def create_server(client_insert_text_interpretation: bool = True) -> LanguageSer
     @rst_language_server.feature(DOCUMENT_SYMBOL)
     def symbols(ls: LanguageServer, params: DocumentSymbolParams):
         doc_id = params.text_document.uri
-        index["sections"][doc_id] = defaultdict(list)
+        index["sections"][doc_id] = []
         document = ls.workspace.get_document(doc_id)
         rst = parse_rst(document.source)
 
         class SymbolVisitor(SparseNodeVisitor):
             def __init__(self, doc: document):
                 super().__init__(doc)
-                self.section_level = 0
+                self.section_stack = []
 
             def visit_section(self, node: section) -> None:
                 section_title = node[0]
                 section_start = node.line - 2
+                top_level_sections = index["sections"][doc_id]
                 s = _Section(
                     name=section_title.astext(),
                     start=section_start,
                     end=-1,
                 )
-                # End all sections at the same or higher level
-                if index["sections"][doc_id]:
-                    max_level = max(index["sections"][doc_id].keys())
-                    for level in range(self.section_level, max_level + 1):
-                        if index["sections"][doc_id][level]:
-                            index["sections"][doc_id][level][-1].end = section_start - 1
-                index["sections"][doc_id][self.section_level].append(s)
-                self.section_level += 1
+                if top_level_sections:
+                    # End all sections at the same or deeper level
+                    top_level_sections[-1].end_at(section_start - 1)
+                # If there is a section at a higher level, add this section as a subsection
+                if self.section_stack:
+                    self.section_stack[-1].subsections.append(s)
+                else:
+                    # Add a new top-level section
+                    index["sections"][doc_id].append(s)
+                self.section_stack.append(s)
 
             def depart_section(self, node: section) -> None:
-                # Extend the end of the section to the end of the document
-                # This will be shortened as soon as a new section follows
-                index["sections"][doc_id][self.section_level - 1][-1].end = (
-                    len(document.lines) - 1
-                )
-                self.section_level -= 1
+                self.section_stack.pop()
 
             def unknown_visit(self, node: Node) -> None:
                 pass
 
         rst.walkabout(SymbolVisitor(rst))
+        if index["sections"][doc_id]:
+            index["sections"][doc_id][-1].end_at(len(document.lines) - 1)
         symbols = []
-        for sections in index["sections"][doc_id].values():
-            for s in sections:
-                name, start, end = s.name, s.start, s.end
-                last_line_length = len(document.lines[end])
-                section_range = Range(
-                    start=Position(line=start, character=0),
-                    end=Position(line=end, character=last_line_length - 1),
-                )
-                symbol = DocumentSymbol(
-                    name=name,
-                    kind=SymbolKind.Class,
-                    range=section_range,
-                    selection_range=section_range,
-                )
-                symbols.append(symbol)
-        symbols.sort(key=lambda s: s.range.start.line)
+        for s in index["sections"][doc_id]:
+            symbol = _to_symbol(document.lines, s)
+            symbols.append(symbol)
         return symbols
 
     return rst_language_server
+
+
+def _to_symbol(lines: List[str], s: _Section) -> DocumentSymbol:
+    name, start, end = s.name, s.start, s.end
+    last_line_length = len(lines[end])
+    section_range = Range(
+        start=Position(line=start, character=0),
+        end=Position(line=end, character=last_line_length - 1),
+    )
+    symbol = DocumentSymbol(
+        name=name,
+        kind=SymbolKind.Class,
+        range=section_range,
+        selection_range=section_range,
+        children=[_to_symbol(lines, subsection) for subsection in s.subsections],
+    )
+    return symbol
 
 
 def parse_rst(text: str) -> document:

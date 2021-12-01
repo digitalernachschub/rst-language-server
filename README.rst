@@ -16,6 +16,8 @@ Autocompletion of title adornments
 
 .. image:: https://raw.githubusercontent.com/digitalernachschub/rst-language-server/a4c81b4805d8ea913042c82e73eb8bae56e88c58/assets/autocomplete_title_adornments.webp
 
+Sections reported as symbols in the editor outline
+
 Installation
 ============
 RST Language Server is available as a package on PyPI and can be installed via `pip`:
@@ -88,6 +90,8 @@ Feature Matrix
 | Feature \\ Editor                  | Kate | Neovim |
 +====================================+======+========+
 | Autocompletion of title adornments | ✔    | ✔      |
++------------------------------------+------+--------+
+| Section symbols                    | ✔    | ?      |
 +------------------------------------+------+--------+
 
 
