@@ -113,7 +113,7 @@ def footnote_labels(draw) -> st.SearchStrategy[nodes.label]:
 
 @st.composite
 def inlines(draw) -> st.SearchStrategy[nodes.inline]:
-    return draw(st.one_of(emphases(), strongs(), subscripts()))
+    return draw(st.one_of(emphases(), strongs(), subscripts(), superscripts()))
 
 
 @st.composite
