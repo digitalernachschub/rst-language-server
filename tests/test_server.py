@@ -4,6 +4,7 @@ import string
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
+from textwrap import dedent
 from typing import Any, BinaryIO, List
 
 import docutils.nodes
@@ -359,3 +360,39 @@ def test_reports_section_titles_as_class_symbols(
         assert symbol.range.end.line < len(text.splitlines())
         assert symbol.selection_range == symbol.range
         previous_section_end = symbol.range.end.line
+
+
+def test_reports_nested_sections_as_nested_symbols(tmp_path_factory):
+    text = dedent(
+        """\
+        Heading 1
+        =========
+        Heading 1.1
+        -----------
+        Some text
+
+        Heading 1.2
+        -----------
+        Heading 2
+        =========
+        """
+    )
+    server_root: Path = tmp_path_factory.mktemp("rst_language_server_test")
+    file_path: Path = server_root / f"test_file.rst"
+    with _client() as client:
+        client.initialize(server_root.as_uri())
+        client.open(uri=file_path.as_uri(), text=text)
+
+        response = client.symbols(file_path.as_uri()).result
+
+    symbols = parse_obj_as(List[DocumentSymbol], response)
+    lines = text.splitlines()
+    assert len(symbols) == 4
+    assert symbols[0].range.start == Position(line=0, character=0)
+    assert symbols[0].range.end == Position(line=7, character=len(lines[7]))
+    assert symbols[1].range.start == Position(line=2, character=0)
+    assert symbols[1].range.end == Position(line=5, character=len(lines[5]))
+    assert symbols[2].range.start == Position(line=6, character=0)
+    assert symbols[2].range.end == Position(line=7, character=len(lines[7]))
+    assert symbols[3].range.start == Position(line=8, character=0)
+    assert symbols[3].range.end == Position(line=9, character=len(lines[9]))
