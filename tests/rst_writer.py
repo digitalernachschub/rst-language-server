@@ -11,6 +11,7 @@ from docutils.nodes import (
     section,
     strong,
     subscript,
+    superscript,
     title,
 )
 from docutils.utils import column_width
@@ -70,6 +71,12 @@ class _SerializationVisitor(SparseNodeVisitor):
         self.text += ":sub:`"
 
     def depart_subscript(self, node: subscript) -> None:
+        self.text += "`"
+
+    def visit_superscript(self, node: superscript) -> None:
+        self.text += ":sup:`"
+
+    def depart_superscript(self, node: superscript) -> None:
         self.text += "`"
 
     def depart_title(self, node: title) -> None:
