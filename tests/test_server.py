@@ -45,7 +45,7 @@ from pygls.protocol import (
 from pygls.server import LanguageServer, StdOutTransportAdapter, deserialize_message
 
 import hypothesis_doctree as du
-from rst_language_server import create_server
+from rst_language_server.server import create_server
 from tests.rst_writer import RstWriter
 
 text = (
