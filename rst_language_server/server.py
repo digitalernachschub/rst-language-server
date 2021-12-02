@@ -2,8 +2,8 @@ import string
 from dataclasses import dataclass, field
 from typing import Iterable, List
 
+import docutils.nodes as nodes
 from docutils.frontend import OptionParser
-from docutils.nodes import Node, SparseNodeVisitor, document, footnote, section
 from docutils.parsers.rst import Parser
 from docutils.utils import column_width, new_document
 from pygls.lsp.methods import (
@@ -47,11 +47,11 @@ def create_server(client_insert_text_interpretation: bool = True) -> LanguageSer
         "sections": {},
     }
 
-    class FootnoteVisitor(SparseNodeVisitor):
-        def visit_footnote(self, node: footnote) -> None:
+    class FootnoteVisitor(nodes.SparseNodeVisitor):
+        def visit_footnote(self, node: nodes.footnote) -> None:
             index["footnotes"].append(node)
 
-        def unknown_visit(self, node: Node) -> None:
+        def unknown_visit(self, node: nodes.Node) -> None:
             pass
 
     @rst_language_server.feature(TEXT_DOCUMENT_DID_OPEN)
@@ -138,12 +138,12 @@ def create_server(client_insert_text_interpretation: bool = True) -> LanguageSer
         document = ls.workspace.get_document(doc_id)
         rst = parse_rst(document.source)
 
-        class SymbolVisitor(SparseNodeVisitor):
-            def __init__(self, doc: document):
+        class SymbolVisitor(nodes.SparseNodeVisitor):
+            def __init__(self, doc: nodes.document):
                 super().__init__(doc)
                 self.section_stack = []
 
-            def visit_section(self, node: section) -> None:
+            def visit_section(self, node: nodes.section) -> None:
                 section_title = node[0]
                 section_start = node.line - 2
                 top_level_sections = index["sections"][doc_id]
@@ -163,10 +163,10 @@ def create_server(client_insert_text_interpretation: bool = True) -> LanguageSer
                     index["sections"][doc_id].append(s)
                 self.section_stack.append(s)
 
-            def depart_section(self, node: section) -> None:
+            def depart_section(self, node: nodes.section) -> None:
                 self.section_stack.pop()
 
-            def unknown_visit(self, node: Node) -> None:
+            def unknown_visit(self, node: nodes.Node) -> None:
                 pass
 
         rst.walkabout(SymbolVisitor(rst))
@@ -198,7 +198,7 @@ def _to_symbol(lines: List[str], s: _Section) -> DocumentSymbol:
     return symbol
 
 
-def parse_rst(text: str) -> document:
+def parse_rst(text: str) -> nodes.document:
     rst_parser = Parser()
     components = (Parser,)
     default_settings = dict(report_level=3)  # Report errors and worse
