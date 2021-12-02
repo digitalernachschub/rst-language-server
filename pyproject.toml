@@ -32,6 +32,9 @@ pytest-cov = "^3.0.0"
 [tool.poetry.scripts]
 rst-ls = "rst_language_server.cli:main"
 
+[tool.coverage.run]
+relative_files = true
+
 [tool.isort]
 profile = "black"
 multi_line_output = 3
