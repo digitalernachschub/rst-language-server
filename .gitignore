@@ -1,6 +1,7 @@
 __pycache__/
 .hypothesis/
 .pytest_cache/
-.coverage
 .tox/
 dist/
+coverage.xml
+.coverage
