@@ -33,6 +33,7 @@ pytest-cov = "^3.0.0"
 rst-ls = "rst_language_server.cli:main"
 
 [tool.coverage.run]
+branch = true
 relative_files = true
 
 [tool.isort]
