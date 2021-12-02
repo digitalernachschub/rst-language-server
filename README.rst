@@ -21,6 +21,8 @@ Sections reported as symbols in the editor outline
 Comparison to other projects
 ============================
 
+`rst-mode <https://docutils.sourceforge.io/docs/user/emacs.html>`_ is part of the docutils project. It provides a lot of rst-related functionality, such as operations on text blocks or helpers for indentation and section titles. However, rst-mode is exclusive to Emacs.
+
 `chrisjsewell/rst-language-server <https://github.com/chrisjsewell/rst-language-server>`_ is much more fully featured than this project. It provides diagnostic messages, navigation to references and definitions etc.
 
 However, there seems to be no versioning, releases, or packages that can be simply installed by a user. Moreover, Chris's implementation targets Visual Studio Code only, whereas this project tries to support various editors.
