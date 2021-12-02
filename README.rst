@@ -18,6 +18,18 @@ Autocompletion of title adornments
 
 Sections reported as symbols in the editor outline
 
+Comparison to other projects
+============================
+
+`chrisjsewell/rst-language-server <https://github.com/chrisjsewell/rst-language-server>`_ is much more fully featured than this project. It provides diagnostic messages, navigation to references and definitions etc.
+
+However, there seems to be no versioning, releases, or packages that can be simply installed by a user. Moreover, Chris's implementation targets Visual Studio Code only, whereas this project tries to support various editors.
+
+
+`lextm/restructuredtext-antlr <https://github.com/lextm/restructuredtext-antlr>`_ was an attempt to use ANTLR to parse reStructuredText into a custom syntax tree. The project is discontinued and archived.
+
+RST Language Server relies on docutils for parsing and its Abstract Syntax Tree.
+
 Installation
 ============
 RST Language Server is available as a package on PyPI and can be installed via `pip`:
