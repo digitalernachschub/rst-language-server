@@ -1,6 +1,7 @@
 import json
 import os
 import string
+import sys
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
@@ -9,6 +10,7 @@ from typing import Any, BinaryIO, List
 
 import docutils.nodes
 import hypothesis.strategies as st
+import pytest
 from docutils.io import StringOutput
 from docutils.utils import column_width, new_document
 from hypothesis import assume, given
@@ -328,6 +330,10 @@ def test_updates_completion_suggestions_upon_document_change(tmp_path_factory):
     assert len(response["items"]) > 0
 
 
+@pytest.mark.skipif(
+    sys.platform.startswith("win"),
+    reason="Hangs indefinitely on Windows, blocking CI runs.",
+)
 @given(sections=st.lists(du.sections(max_size=3, max_level=1)))
 def test_reports_section_titles_as_class_symbols(
     tmp_path_factory, sections: List[docutils.nodes.section]
