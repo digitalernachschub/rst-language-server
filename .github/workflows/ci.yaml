@@ -4,6 +4,9 @@ on:
   - push
   - pull_request
 
+env:
+  PYTHON_LATEST: "3.10"
+
 jobs:
   test-python:
     name: Tests on Linux for "${{ matrix.python-version }}"
@@ -36,3 +39,15 @@ jobs:
         run: pip install poetry==1.1.11 tox==3.24.4 tox-gh-actions==2.8.1
       - name: Test with tox
         run: poetry run tox
+
+  package:
+    name: Create distribution artefacts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{env.PYTHON_LATEST}}
+      - run: pip install poetry==1.1.11 twine==3.6.0
+      - run: poetry build
+      - run: poetry run twine check dist/*
