@@ -1,19 +1,7 @@
 import string
 from typing import Iterable
 
-from docutils.nodes import (
-    Node,
-    SparseNodeVisitor,
-    Text,
-    document,
-    emphasis,
-    paragraph,
-    section,
-    strong,
-    subscript,
-    superscript,
-    title,
-)
+import docutils.nodes as nodes
 from docutils.utils import column_width
 from docutils.writers import Writer
 
@@ -36,53 +24,55 @@ class RstWriter(Writer):
         self.output = serializer.text
 
 
-class _SerializationVisitor(SparseNodeVisitor):
-    def __init__(self, doc: document, section_adornment_characters: Iterable[str]):
+class _SerializationVisitor(nodes.SparseNodeVisitor):
+    def __init__(
+        self, doc: nodes.document, section_adornment_characters: Iterable[str]
+    ):
         super().__init__(doc)
         self._section_level = -1
         self.text = ""
         self.section_adornment_characters = list(section_adornment_characters)
 
-    def visit_Text(self, node: Text) -> None:
+    def visit_Text(self, node: nodes.Text) -> None:
         self.text += node.astext()
 
-    def visit_emphasis(self, node: emphasis) -> None:
+    def visit_emphasis(self, node: nodes.emphasis) -> None:
         self.text += "*"
 
-    def depart_emphasis(self, node: emphasis) -> None:
+    def depart_emphasis(self, node: nodes.emphasis) -> None:
         self.text += "*"
 
-    def depart_paragraph(self, node: paragraph) -> None:
+    def depart_paragraph(self, node: nodes.paragraph) -> None:
         self.text += "\n\n"
 
-    def visit_strong(self, node: strong) -> None:
+    def visit_strong(self, node: nodes.strong) -> None:
         self.text += "**"
 
-    def depart_strong(self, node: strong) -> None:
+    def depart_strong(self, node: nodes.strong) -> None:
         self.text += "**"
 
-    def visit_section(self, node: section) -> None:
+    def visit_section(self, node: nodes.section) -> None:
         self._section_level += 1
 
-    def depart_section(self, node: section) -> None:
+    def depart_section(self, node: nodes.section) -> None:
         self._section_level -= 1
 
-    def visit_subscript(self, node: subscript) -> None:
+    def visit_subscript(self, node: nodes.subscript) -> None:
         self.text += ":sub:`"
 
-    def depart_subscript(self, node: subscript) -> None:
+    def depart_subscript(self, node: nodes.subscript) -> None:
         self.text += "`"
 
-    def visit_superscript(self, node: superscript) -> None:
+    def visit_superscript(self, node: nodes.superscript) -> None:
         self.text += ":sup:`"
 
-    def depart_superscript(self, node: superscript) -> None:
+    def depart_superscript(self, node: nodes.superscript) -> None:
         self.text += "`"
 
-    def depart_title(self, node: title) -> None:
+    def depart_title(self, node: nodes.title) -> None:
         adornment_char = self.section_adornment_characters[self._section_level]
         adornment = column_width(self.text.splitlines()[-1]) * adornment_char
         self.text += f"\n{adornment}\n"
 
-    def unknown_visit(self, node: Node) -> None:
+    def unknown_visit(self, node: nodes.Node) -> None:
         pass
