@@ -52,6 +52,8 @@ jobs:
     runs-on: "ubuntu-latest"
     needs: test-python
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
       - name: Unstash coverage data
         uses: actions/download-artifact@v2
         with:
