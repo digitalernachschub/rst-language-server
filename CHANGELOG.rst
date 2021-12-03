@@ -7,6 +7,7 @@ v0.3.0 (Unreleased)
 Features
 --------
 - Section symbols are reported in a hierarchical structure
+- Added official support for Emacs
 
 v0.2.0 (2021-11-30)
 ===================
