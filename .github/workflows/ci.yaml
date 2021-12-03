@@ -1,4 +1,4 @@
-name: Continuous Integration
+name: Continuous Deployment
 
 on:
   - push
@@ -75,3 +75,9 @@ jobs:
       - run: "pip install poetry==${{ env.POETRY_VERSION }} twine==3.6.0"
       - run: poetry build
       - run: poetry run twine check dist/*
+      - name: Publish to PyPI
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
