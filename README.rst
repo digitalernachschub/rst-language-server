@@ -121,15 +121,16 @@ RST Language Server can be used with any text editor that implements a Language 
 
 Feature Matrix
 --------------
-+------------------------------------+------+--------+
-| Feature \\ Editor                  | Kate | Neovim |
-+====================================+======+========+
-| Autocompletion of title adornments | ✔    | ✔      |
-+------------------------------------+------+--------+
-| Section symbols                    | ✔    | ✔ [#]_ |
-+------------------------------------+------+--------+
++------------------------------------+------+--------+--------+
+| Feature \\ Editor                  | Kate | Neovim | Emacs  |
++====================================+======+========+========+
+| Autocompletion of title adornments | ✔    | ✔      | ✔      |
++------------------------------------+------+--------+--------+
+| Section symbols                    | ✔    | ✔ [#]_ | ✔ [#]_ |
++------------------------------------+------+--------+--------+
 
 .. [#] Tested with `Aerial <https://github.com/stevearc/aerial.nvim>`_
+.. [#] Tested with `company-mode <https://company-mode.github.io/>`_
 
 Development configuration with Kate
 ===================================
