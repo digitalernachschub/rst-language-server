@@ -32,17 +32,16 @@ However, there seems to be no versioning, releases, or packages that can be simp
 
 RST Language Server relies on docutils for parsing and its Abstract Syntax Tree.
 
-Installation
-============
+Installation and Setup
+======================
 RST Language Server is available as a package on PyPI and can be installed via `pip`:
 
 .. code:: sh
 
     $ pip install --user rst-language-server
 
-Usage with Kate
-===============
-
+Kate
+----
 Using RST Language Server with `Kate`_ requires the `LSP Client Plugin`_. Once the plugin is activated in the settings a new settings symbol named *LSP-Client* appears. Click on the section, select the *User Server Settings* tab and paste the following server configuration.
 
 .. code:: json
@@ -61,8 +60,8 @@ This will start RST Language Server when opening any file that is configured to 
 .. _Kate: https://apps.kde.org/kate/
 .. _LSP Client Plugin: https://docs.kde.org/stable5/en/kate/kate/kate-application-plugin-lspclient.html
 
-Usage with Neovim
-=================
+Neovim
+------
 There are numerous ways to use Language Servers in with Neovim. This setup configuration assumes that you use `nvim-lspconfig`_.
 
 To registers RST Language Server with nvim-lspconfig, add the following lua code before requiring `lspconfig` and calling the corresponding `setup` function of the language server:
@@ -93,6 +92,28 @@ To registers RST Language Server with nvim-lspconfig, add the following lua code
 Note that this setup currently `requires Neovim Nightly (0.6). <https://neovim.discourse.group/t/how-to-add-custom-lang-server-without-fork-and-send-a-pr-to-nvim-lspconfig-repo-resolved/1170/1>`_
 
 .. _nvim-lspconfig: https://github.com/neovim/nvim-lspconfig
+
+Emacs
+-----
+RST Language Server can be used with Emacs via `lsp-mode <https://emacs-lsp.github.io/lsp-mode/>`_. Add the following configuration to your *init.el* in order to start rst-ls in rst-mode:
+
+.. code:: lisp
+
+    (with-eval-after-load 'lsp-mode
+      (add-to-list 'lsp-language-id-configuration
+        '(rst-mode . "rst")))
+
+    (defcustom lsp-rst-ls-command '("rst-ls")
+      "Command to start the RST Language Server."
+      :type 'string)
+
+    (require 'lsp-mode)
+
+    (lsp-register-client
+      (make-lsp-client :new-connection (lsp-stdio-connection (lambda () lsp-rst-ls-command))
+                       :major-modes '(rst-mode)
+                       :server-id 'rst-ls))
+
 
 Is my editor supported?
 =======================
