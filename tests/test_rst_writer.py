@@ -12,6 +12,7 @@ from hypothesis import given
 from hypothesis_doctree import (
     emphases,
     footnote_labels,
+    literals,
     paragraphs,
     sections,
     strongs,
@@ -63,6 +64,17 @@ def test_serializes_emphasis(document: nodes.document):
     writer.write(document, output)
 
     assert output.destination == f"*{emphasis.astext()}*"
+
+
+@given(document=literals().map(_wrap_in_document))
+def test_serializes_literals(document: nodes.document):
+    writer = RstWriter()
+    output = StringOutput(encoding="unicode")
+    literal = document[0]
+
+    writer.write(document, output)
+
+    assert output.destination == f"``{literal.astext()}``"
 
 
 @given(document=strongs().map(_wrap_in_document))

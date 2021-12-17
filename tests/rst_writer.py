@@ -42,6 +42,12 @@ class _SerializationVisitor(nodes.SparseNodeVisitor):
     def depart_emphasis(self, node: nodes.emphasis) -> None:
         self.text += "*"
 
+    def visit_literal(self, node: nodes.literal) -> None:
+        self.text += "``"
+
+    def depart_literal(self, node: nodes.literal) -> None:
+        self.text += "``"
+
     def depart_paragraph(self, node: nodes.paragraph) -> None:
         self.text += "\n\n"
 
