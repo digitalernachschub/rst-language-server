@@ -60,7 +60,8 @@ text = (
     .filter(lambda t: t[-1] not in ".)")  # e.g. "0.", "0)"
 )
 
-footnote_content = text
+# Footnote content cannot be "::" or it will be interpreted rather than being raw text
+footnote_content = text.filter(lambda t: t != "::")
 
 
 @contextmanager
