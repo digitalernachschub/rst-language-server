@@ -180,10 +180,9 @@ def test_serialized_section_is_parsed_by_docutils(document: nodes.document):
             "report_level": 3,  # Errors or worse
         },
     )
-    assert (
-        document_equals(document, parsed_doc),
-        f"The following reStructuredText failed a write-parse round trip:\n{output.destination}",
-    )
+    assert document_equals(
+        document, parsed_doc
+    ), f"The following reStructuredText failed a write-parse round trip:\n{output.destination}"
 
 
 def document_equals(doc_a: nodes.document, doc_b: nodes.document) -> bool:
