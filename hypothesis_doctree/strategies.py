@@ -38,6 +38,25 @@ def emphases(draw) -> st.SearchStrategy[nodes.emphasis]:
 
 
 @st.composite
+def literals(draw) -> nodes.literal:
+    text_strategy = st.text(
+        # Blacklist control characters, since line breaks are not preserved
+        st.characters(blacklist_categories=["Cc", "Cs"]),
+    ).map(lambda t: t.replace("\\", ""))
+    # Text consisting of whitespace only may be interpreted differently, e.g. "`` ``"
+    text_strategy = text_strategy.map(lambda t: t.strip())
+    # Filter empty text to avoid having "````" interpreted as a transition
+    text_strategy = text_strategy.filter(lambda t: len(t) > 0)
+    text_strategy = text_strategy.filter(lambda t: "``" not in t)
+    return draw(
+        st.builds(
+            nodes.literal,
+            text=text_strategy,
+        )
+    )
+
+
+@st.composite
 def strongs(draw) -> st.SearchStrategy[nodes.emphasis]:
     return draw(
         st.builds(
@@ -113,7 +132,9 @@ def footnote_labels(draw) -> st.SearchStrategy[nodes.label]:
 
 @st.composite
 def _inline_elements(draw) -> st.SearchStrategy[nodes.inline]:
-    return draw(st.one_of(emphases(), strongs(), subscripts(), superscripts()))
+    return draw(
+        st.one_of(emphases(), literals(), strongs(), subscripts(), superscripts())
+    )
 
 
 @st.composite
