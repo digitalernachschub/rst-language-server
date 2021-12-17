@@ -139,7 +139,9 @@ def test_serialized_paragraph_is_parsed_by_docutils(document: nodes.document):
     )
     doc_repr = publish_from_doctree(document)
     parsed_doc_repr = publish_from_doctree(_filter_system_messages(parsed_doc))
-    assert doc_repr == parsed_doc_repr
+    assert (
+        doc_repr == parsed_doc_repr
+    ), f"The following reStructuredText failed a write-parse round trip:\n{output.destination}"
 
 
 @given(
