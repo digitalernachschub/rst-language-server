@@ -1,5 +1,5 @@
 import string
-from textwrap import dedent
+from textwrap import dedent, indent
 from typing import Union
 
 import docutils.nodes as nodes
@@ -10,6 +10,7 @@ from docutils.utils import column_width, new_document
 from hypothesis import given
 
 from hypothesis_doctree import (
+    admonitions,
     emphases,
     footnote_labels,
     literals,
@@ -142,6 +143,32 @@ def test_serialized_paragraph_is_parsed_by_docutils(document: nodes.document):
     assert (
         doc_repr == parsed_doc_repr
     ), f"The following reStructuredText failed a write-parse round trip:\n{output.destination}"
+
+
+@given(document=admonitions().map(_wrap_in_document))
+def test_serializes_admonition(document: nodes.document):
+    writer = RstWriter()
+    output = StringOutput(encoding="unicode")
+    admonition = document[0]
+    title = admonition[0]
+    admonition_body = admonition[1:]
+    admonition_body_output = StringOutput(encoding="unicode")
+    admonition_body_doc = new_document("admonition_doc.rst")
+    for node in admonition_body:
+        admonition_body_doc.append(node)
+    writer.write(admonition_body_doc, admonition_body_output)
+    admonition_body_str = admonition_body_output.destination
+
+    writer.write(document, output)
+
+    expected_rst = dedent(
+        f"""\
+            .. admonition:: {title.astext()}
+
+        """
+    )
+    expected_rst += indent(admonition_body_str, 4 * " ")
+    assert output.destination == expected_rst
 
 
 @given(
