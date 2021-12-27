@@ -149,6 +149,17 @@ def titles(draw) -> st.SearchStrategy[nodes.title]:
 
 
 @st.composite
+def admonitions(draw) -> nodes.admonition:
+    title = draw(titles())
+    body = draw(st.lists(body_elements, min_size=1, max_size=5))
+    return nodes.admonition(
+        "",
+        title,
+        *body,
+    )
+
+
+@st.composite
 def sections(
     draw,
     title: st.SearchStrategy[nodes.title] = None,
