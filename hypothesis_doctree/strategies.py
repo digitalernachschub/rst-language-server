@@ -101,7 +101,8 @@ def paragraphs(draw) -> st.SearchStrategy[nodes.paragraph]:
 
 
 simple_body_elements = paragraphs()
-body_elements = simple_body_elements
+compound_body_elements = st.deferred(lambda: admonitions())
+body_elements = simple_body_elements | compound_body_elements
 
 # docutils matches auto-numbered footnote labels against the following regex
 # see https://sourceforge.net/p/docutils/code/HEAD/tree/tags/docutils-0.18/docutils/parsers/rst/states.py#l2322
@@ -151,7 +152,7 @@ def titles(draw) -> st.SearchStrategy[nodes.title]:
 @st.composite
 def admonitions(draw) -> nodes.admonition:
     title = draw(titles())
-    body = draw(st.lists(body_elements, min_size=1, max_size=5))
+    body = draw(st.lists(body_elements, min_size=1, max_size=3))
     return nodes.admonition(
         "",
         title,
