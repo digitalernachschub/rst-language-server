@@ -172,6 +172,15 @@ def attentions(draw) -> nodes.attention:
 
 
 @st.composite
+def cautions(draw) -> nodes.caution:
+    body = draw(st.lists(body_elements, min_size=1, max_size=3))
+    return nodes.caution(
+        "",
+        *body,
+    )
+
+
+@st.composite
 def sections(
     draw,
     title: st.SearchStrategy[nodes.title] = None,
