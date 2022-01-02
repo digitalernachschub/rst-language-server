@@ -1,4 +1,5 @@
 import re
+from typing import Callable, Type, TypeVar
 from unicodedata import combining
 
 import docutils.nodes as nodes
@@ -162,22 +163,31 @@ def admonitions(draw) -> nodes.admonition:
     )
 
 
-@st.composite
-def attentions(draw) -> nodes.attention:
-    body = draw(st.lists(body_elements, min_size=1, max_size=3))
-    return nodes.attention(
-        "",
-        *body,
-    )
+AdmonitionSubtype = TypeVar(
+    "AdmonitionSubtype",
+    nodes.attention,
+    nodes.caution,
+)
 
 
-@st.composite
-def cautions(draw) -> nodes.caution:
-    body = draw(st.lists(body_elements, min_size=1, max_size=3))
-    return nodes.caution(
-        "",
-        *body,
-    )
+def _admonition_strategy(
+    admonition_type: Type[AdmonitionSubtype],
+) -> Callable[[], st.SearchStrategy[AdmonitionSubtype]]:
+    """Returns a strategy for admonitions of the specified type."""
+
+    @st.composite
+    def _admonition(draw) -> AdmonitionSubtype:
+        body = draw(st.lists(body_elements, min_size=1, max_size=3))
+        return admonition_type(
+            "",
+            *body,
+        )
+
+    return _admonition
+
+
+attentions = _admonition_strategy(nodes.attention)
+cautions = _admonition_strategy(nodes.caution)
 
 
 @st.composite
