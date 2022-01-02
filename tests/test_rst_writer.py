@@ -12,6 +12,7 @@ from hypothesis import given
 from hypothesis_doctree import (
     admonitions,
     attentions,
+    cautions,
     emphases,
     footnote_labels,
     literals,
@@ -189,6 +190,26 @@ def test_serializes_attention(document: nodes.document):
 
     expected_rst = f".. attention::\n"
     expected_rst += indent(attention_body_str, 4 * " ")
+    assert output.destination == expected_rst
+
+
+@given(document=cautions().map(_wrap_in_document))
+def test_serializes_caution(document: nodes.document):
+    writer = RstWriter()
+    output = StringOutput(encoding="unicode")
+    caution = document[0]
+    caution_body = caution[0:]
+    caution_body_output = StringOutput(encoding="unicode")
+    caution_body_doc = new_document("caution_doc.rst")
+    for node in caution_body:
+        caution_body_doc.append(node)
+    writer.write(caution_body_doc, caution_body_output)
+    caution_body_str = caution_body_output.destination
+
+    writer.write(document, output)
+
+    expected_rst = f".. caution::\n"
+    expected_rst += indent(caution_body_str, 4 * " ")
     assert output.destination == expected_rst
 
 
