@@ -1,5 +1,6 @@
 from hypothesis_doctree.strategies import (  # ignore: F401
     admonitions,
+    attentions,
     documents,
     emphases,
     footnote_labels,
@@ -15,6 +16,7 @@ from hypothesis_doctree.strategies import (  # ignore: F401
 
 __all__ = (
     "admonitions",
+    "attentions",
     "documents",
     "emphases",
     "footnote_labels",
