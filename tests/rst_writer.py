@@ -51,6 +51,15 @@ class _SerializationVisitor(nodes.SparseNodeVisitor):
     def depart_admonition(self, node: nodes.admonition) -> None:
         self._structural_element.pop()
 
+    def visit_attention(self, node: nodes.attention) -> None:
+        indentation = 4 * len(self._structural_element) * " "
+        self.text += indentation
+        self.text += ".. attention::\n"
+        self._structural_element.append(node)
+
+    def depart_attention(self, node: nodes.attention) -> None:
+        self._structural_element.pop()
+
     def visit_emphasis(self, node: nodes.emphasis) -> None:
         self.text += "*"
 
