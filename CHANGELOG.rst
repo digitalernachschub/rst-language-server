@@ -2,6 +2,10 @@
 Changelog
 =========
 
+v0.4.0 (2022-10-21)
+===================
+- Discontinued rst-language-server.
+
 v0.3.0 (2021-12-03)
 ===================
 Features
