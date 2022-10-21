@@ -1,3 +1,10 @@
+====================
+Project discontinued
+====================
+This project has been discontinued in favour of `esbonio. <https://github.com/swyddfa/esbonio>`__
+
+You may also want to look at the projects mentioned below in the section *Comparison to other projects.*
+
 ===================
 RST Language Server
 ===================
