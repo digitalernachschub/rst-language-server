@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "rst-language-server"
-version = "0.3.0"
+version = "0.4.0"
 description = "Server implementation of the Language Server Protocol for reStructuredText"
 authors = ["Michael Seifert <m.seifert@digitalernachschub.de>"]
 license = "MIT"
